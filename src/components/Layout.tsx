@@ -3,7 +3,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { AnimatePresence, motion, useScroll } from 'motion/react'
 import { ArrowRight, ArrowUpRight, CalendarCheck, ChevronDown, Clock, Mail, MapPin, Phone, X } from 'lucide-react'
 import { nav, site, waLink } from '../data/site'
-import { groups, byGroup } from '../data/treatments'
+import { groups, byGroup, type Treatment } from '../data/treatments'
 import { PageCurtain, useHideOnScroll } from './motion'
 import { initSmoothScroll, lockScroll, scrollToTarget } from '../lib/smooth'
 import { FacebookIcon, InstagramIcon, LinkedinIcon, Logo, WhatsAppIcon, YoutubeIcon } from './ui'
@@ -22,6 +22,9 @@ function useScrolled(px = 24) {
 function Header() {
   const scrolled = useScrolled()
   const [open, setOpen] = useState<string | null>(null)
+  // Treatment under the pointer in the mega menu; its photo shows in the right-hand card
+  const [hovered, setHovered] = useState<Treatment | null>(null)
+  useEffect(() => { if (open !== 'Treatments') setHovered(null) }, [open])
   const [mobile, setMobile] = useState(false)
   const toggleRef = useRef<HTMLButtonElement>(null)
   const wasOpen = useRef(false)
@@ -111,13 +114,13 @@ function Header() {
                   <p className="mb-3 text-eyebrow font-semibold uppercase text-muted">{g.label}</p>
                   <ul className="space-y-1">
                     {byGroup(g.key).map((t) => (
-                      <li key={t.slug}><Link to={`/treatments/${t.slug}`} className="group flex items-baseline gap-2 py-1 text-[0.9375rem] font-medium text-ink hover:text-plum">
+                      <li key={t.slug}><Link to={`/treatments/${t.slug}`} onMouseEnter={() => setHovered(t)} onFocus={() => setHovered(t)} className="group flex items-baseline gap-2 py-1 text-[0.9375rem] font-medium text-ink hover:text-plum">
                         {t.name}<span className="truncate text-xs font-normal text-muted group-hover:text-plum/70">{t.full}</span>
                       </Link></li>
                     ))}
                   </ul>
                 </div>
-              )).reduce<React.ReactNode[]>((acc, el, i) => { acc.push(el); if (i === 2) acc.push(<MegaFeature key="feat" />); return acc }, [])}
+              )).reduce<React.ReactNode[]>((acc, el, i) => { acc.push(el); if (i === 2) acc.push(<MegaFeature key="feat" t={hovered} />); return acc }, [])}
             </div>
           </motion.div>
         )}
@@ -129,17 +132,25 @@ function Header() {
   )
 }
 
-function MegaFeature() {
+// Photo for treatments that have none of their own
+const MEGA_FALLBACK: Partial<Record<Treatment['group'], string>> = { female: '/img/laparoscopy.webp', male: '/img/semen-2.webp' }
+
+function MegaFeature({ t }: { t: Treatment | null }) {
+  const img = t ? t.image ?? MEGA_FALLBACK[t.group] ?? '/img/doctors-duo.webp' : '/img/doctors-duo.webp'
   return (
-    <Link to="/treatments" className="group row-span-2 flex flex-col justify-between overflow-hidden rounded-card bg-plum-900 p-6 text-paper">
-      <div>
-        <p className="text-eyebrow font-semibold uppercase text-lilac">Not sure where to start?</p>
-        <p className="mt-3 font-display text-2xl leading-tight">Explore all 18 treatments and find the right first step.</p>
+    <Link to={t ? `/treatments/${t.slug}` : '/treatments'} className="group row-span-2 flex flex-col justify-between overflow-hidden rounded-card bg-plum-900 p-6 text-paper">
+      <div className="min-h-[6.5rem]">
+        <p className="text-eyebrow font-semibold uppercase text-lilac">{t ? groups.find((g) => g.key === t.group)?.label : 'Not sure where to start?'}</p>
+        <p className="mt-3 font-display text-2xl leading-tight">{t ? t.name : 'Explore all 18 treatments and find the right first step.'}</p>
+        {t && <p className="mt-1 text-sm text-paper/70">{t.full}</p>}
       </div>
-      <div className="mt-6 overflow-hidden rounded-xl">
-        <img src="/img/doctors-duo.webp" alt="" className="aspect-[4/3] w-full object-cover transition duration-700 group-hover:scale-105" />
+      <div className="relative mt-6 aspect-[4/3] overflow-hidden rounded-xl bg-plum-800">
+        <AnimatePresence initial={false}>
+          <motion.img key={img} src={img} alt="" initial={{ opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.35, ease: 'easeOut' }}
+            className="absolute inset-0 h-full w-full object-cover" />
+        </AnimatePresence>
       </div>
-      <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">View treatments <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
+      <span className="mt-5 inline-flex items-center gap-2 text-sm font-semibold">{t ? `View ${t.name}` : 'View treatments'} <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
     </Link>
   )
 }

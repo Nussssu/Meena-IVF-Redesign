@@ -277,7 +277,10 @@ function IvfStoryPinned() {
             <StoryHeading light />
             <div className="mt-8 flex items-center gap-6">
               <Embryo stage={stage} dark className="h-44 w-44 shrink-0 xl:h-56 xl:w-56" />
-              <p className="text-sm text-lilac">{EMBRYO_LABELS[stage]}</p>
+              <div>
+                <p className="font-display text-5xl text-paper">0{stage + 1}<span className="text-2xl text-paper/40"> / 06</span></p>
+                <p className="mt-1 text-sm text-lilac">{EMBRYO_LABELS[stage]}</p>
+              </div>
             </div>
             <Link to="/treatments/ivf" className="mt-8 inline-flex min-h-[2.75rem] items-center gap-2 text-sm font-semibold text-lilac hover:text-white">Read about IVF <ArrowRight className="h-4 w-4" /></Link>
           </div>
@@ -475,10 +478,10 @@ function WhyBento() {
   const items = [
     { label: 'Self-cycle first', Icon: Stethoscope, img: 'folliculometry', alt: 'Doctor explaining a natural cycle scan to a patient', head: 'A natural start for your', em: 'journey.', text: 'We try your natural cycle first, before any medication.' },
     { label: 'Personalised treatment plans', Icon: CalendarDays, img: 'consult', alt: 'Couple planning treatment with their doctor', head: 'A plan built around', em: 'you.', text: 'Built around your medical history, condition and goals.' },
-    { label: 'Transparent & affordable care', Icon: ShieldCheck, img: 'couple-doctor', alt: 'Doctor talking openly with an expecting couple', head: 'Clear costs, no', em: 'surprises.', text: 'Clear pricing upfront, with no hidden costs.' },
-    { label: 'Proven treatment protocols', Icon: ChartNoAxesColumnIncreasing, img: 'embryo-team', alt: 'Meena IVF embryology team at work', head: 'Protocols you can', em: 'trust.', text: 'Internationally recognised protocols for consistent results.' },
-    { label: 'Advanced fertility technology', Icon: Microscope, img: 'lab-microscope', alt: 'Embryologist at a microscope in the IVF lab', head: 'Modern science, in expert', em: 'hands.', text: 'Our in-house OT and IVF lab, all under one roof.' },
-    { label: 'Complete patient support', Icon: Heart, img: 'patient-care', alt: 'Patient being cared for by the Meena IVF team', head: 'Cared for at every', em: 'step.', text: 'Counselling and guidance at every stage of treatment.' },
+    { label: 'Transparent & affordable care', Icon: ShieldCheck, img: 'journey-miscarriage', alt: 'Couple talking openly with their doctor about the treatment plan', head: 'Clear costs, no', em: 'surprises.', text: 'Clear pricing upfront, with no hidden costs.' },
+    { label: 'Proven treatment protocols', Icon: ChartNoAxesColumnIncreasing, img: 'doctors-duo', alt: 'Meena IVF fertility specialists', head: 'Protocols you can', em: 'trust.', text: 'Internationally recognised protocols for consistent results.' },
+    { label: 'Advanced fertility technology', Icon: Microscope, img: 'lab-microscope', alt: 'Microscope in the Meena IVF lab', head: 'Modern science, in expert', em: 'hands.', text: 'Our in-house OT and IVF lab, all under one roof.' },
+    { label: 'Complete patient support', Icon: Heart, img: 'couple-doctor', alt: 'Doctor supporting an expecting couple', head: 'Cared for at every', em: 'step.', text: 'Counselling and guidance at every stage of treatment.' },
   ]
   const n = items.length
   const cur = items[active]
@@ -561,12 +564,15 @@ function WhyBento() {
           <Reveal delay={0.1} className="relative flex min-h-[30rem] flex-col overflow-hidden rounded-panel bg-gradient-to-br from-plum-700 via-plum-800 to-plum-900 text-paper shadow-lift">
             <div className="relative h-44 shrink-0 overflow-hidden lg:h-[42%]">
               <AnimatePresence initial={false}>
-                <motion.img key={cur.img} src={`/img/${cur.img}.webp`} alt={cur.alt} loading="lazy"
-                  initial={reduce ? false : { opacity: 0, scale: 1.06 }} animate={{ opacity: 1, scale: 1 }} exit={reduce ? undefined : { opacity: 0 }}
-                  transition={{ duration: 0.6, ease: EASE }}
-                  className="absolute inset-0 h-full w-full object-cover" />
+                <motion.div key={cur.img} className="absolute inset-0"
+                  initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
+                  transition={{ duration: 0.6, ease: EASE }}>
+                  {/* blurred copy fills the frame; the full photo sits on top uncropped */}
+                  <img src={`/img/${cur.img}.webp`} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl" />
+                  <img src={`/img/${cur.img}.webp`} alt={cur.alt} loading="lazy" className="absolute inset-0 h-full w-full object-contain" />
+                </motion.div>
               </AnimatePresence>
-              <div className="absolute inset-0 bg-gradient-to-b from-transparent via-plum-800/10 to-plum-800" />
+              <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-b from-transparent to-plum-800" />
             </div>
             <div className="relative flex flex-1 flex-col px-7 pb-7 pt-6 md:px-8 md:pb-8 md:pt-7" aria-live="polite">
               <AnimatePresence mode="wait">
@@ -657,9 +663,9 @@ function TestimonialDeck() {
 /* ───────────────── 9. Centres ───────────────── */
 // Map-pin layout (md+): tip position of each pin in % of the stage, and pin width in % of the stage
 const PIN_LAYOUT: Record<string, { x: number; y: number; w: number; order: number }> = {
-  khulna: { x: 29, y: 62, w: 15, order: 1 },
-  banani: { x: 50, y: 84, w: 23, order: 0 },
-  cumilla: { x: 71, y: 54, w: 15, order: 2 },
+  khulna: { x: 22, y: 88, w: 15, order: 1 },
+  banani: { x: 50, y: 94.5, w: 24, order: 0 },
+  cumilla: { x: 80, y: 88, w: 15, order: 2 },
 }
 // Teardrop outline (ring) and the inner window the photo is clipped to, in a 100×130 box
 const PIN_OUTER = 'M50 128 C38 108 4 86 4 50 A46 46 0 1 1 96 50 C96 86 62 108 50 128 Z'
@@ -702,33 +708,25 @@ function CentresArches() {
   const reduce = useReducedMotion()
   const list = ['khulna', 'banani', 'cumilla'].map((slug) => centres.find((c) => c.slug === slug)!).filter(Boolean)
   const P = (k: string) => PIN_LAYOUT[k]
-  // Glowing routes from Banani out to each OPD (viewBox matches the stage: 1000 × 420)
+  // Dashed routes from each OPD up to the Banani label (viewBox matches the stage: 1000 × 340)
   const toX = (v: number) => v * 10
-  const toY = (v: number) => v * 4.2
-  const route = (from: string, to: string, lift: number) => {
-    const a = P(from), b = P(to)
-    const ax = toX(a.x), ay = toY(a.y), bx = toX(b.x), by = toY(b.y)
-    return `M${ax},${ay} C${ax + (bx - ax) * 0.35},${ay - lift} ${bx - (bx - ax) * 0.25},${by - lift * 0.6} ${bx},${by}`
-  }
-  const routes = [route('banani', 'khulna', 110), route('banani', 'cumilla', 130)]
+  const toY = (v: number) => v * 3.4
+  const routes = [
+    { d: 'M258,290 C320,238 370,238 425,252', end: [258, 290] },
+    { d: 'M575,252 C630,238 680,238 742,290', end: [742, 290] },
+  ]
   const pinDelay = (slug: string) => P(slug).order * 0.22
   const stage = useRef<HTMLDivElement>(null)
   const show = useInView(stage, { once: true, amount: 0.3 })
   return (
-    <section className="section bg-mist">
+    <section className="section bg-mist pb-10 pt-0 md:pb-12 md:pt-0 lg:pb-14 lg:pt-0">
       <div className="container-x">
         <SectionHeader title={<>Find a Meena IVF centre <em className="text-plum">near you</em></>} />
 
-        {/* md+: pins on a stage, joined by glowing routes */}
-        <div ref={stage} className="relative mb-6 hidden aspect-[1000/420] md:block lg:mb-10">
-          <svg aria-hidden viewBox="0 0 1000 420" className="absolute inset-0 h-full w-full overflow-visible">
+        {/* md+: pins on a stage, joined by dashed routes */}
+        <div ref={stage} className="relative hidden aspect-[1000/340] md:block">
+          <svg aria-hidden viewBox="0 0 1000 340" className="absolute inset-0 h-full w-full overflow-visible">
             <defs>
-              <linearGradient id="route-glow" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0%" stopColor="#F7C98F" stopOpacity="0.25" />
-                <stop offset="50%" stopColor="#F9D7A8" />
-                <stop offset="100%" stopColor="#E7A6F0" stopOpacity="0.5" />
-              </linearGradient>
-              <filter id="route-blur" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="4" /></filter>
               <radialGradient id="tip-glow"><stop offset="0%" stopColor="#FFE7C2" /><stop offset="35%" stopColor="#E7A6F0" stopOpacity=".7" /><stop offset="100%" stopColor="#E7A6F0" stopOpacity="0" /></radialGradient>
             </defs>
             {/* ground rings and glow under each pin */}
@@ -753,20 +751,20 @@ function CentresArches() {
                 </g>
               )
             })}
-            {/* routes: blurred glow + bright core that draw in, then a light pulse travels along */}
-            {routes.map((d, i) => (
+            {/* routes: dashed line fades in after the pins, then a soft light travels along it */}
+            {routes.map((r, i) => (
               <g key={i}>
-                <motion.path d={d} fill="none" stroke="url(#route-glow)" strokeWidth="8" strokeLinecap="round" filter="url(#route-blur)"
-                  initial={reduce ? false : { pathLength: 0, opacity: 0 }} animate={show ? { pathLength: 1, opacity: 0.9 } : undefined}
-                  transition={{ duration: 1.2, delay: 0.75 + i * 0.15, ease: 'easeInOut' }} />
-                <motion.path d={d} fill="none" stroke="#FCE3C4" strokeWidth="2" strokeLinecap="round"
-                  initial={reduce ? false : { pathLength: 0 }} animate={show ? { pathLength: 1 } : undefined}
-                  transition={{ duration: 1.2, delay: 0.75 + i * 0.15, ease: 'easeInOut' }} />
+                <motion.path d={r.d} fill="none" stroke="#9440A0" strokeWidth="1.6" strokeDasharray="5 6" strokeLinecap="round"
+                  initial={reduce ? false : { opacity: 0 }} animate={show ? { opacity: 0.85 } : undefined}
+                  transition={{ duration: 0.8, delay: 0.8 + i * 0.15 }} />
+                <motion.circle cx={r.end[0]} cy={r.end[1]} r="4" fill="#9440A0"
+                  initial={reduce ? false : { opacity: 0, scale: 0 }} animate={show ? { opacity: 1, scale: 1 } : undefined}
+                  transition={{ duration: 0.4, delay: 1.1 + i * 0.15 }} />
                 {!reduce && (
-                  <motion.path d={d} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" pathLength={1} strokeDasharray="0.08 1"
-                    initial={{ strokeDashoffset: 0.08, opacity: 0 }} animate={{ strokeDashoffset: -1, opacity: 1 }}
-                    transition={{ strokeDashoffset: { duration: 2.8, repeat: Infinity, ease: 'easeInOut', delay: 2.2 + i * 0.6, repeatDelay: 0.8 }, opacity: { delay: 2.2 } }}
-                    style={{ filter: 'drop-shadow(0 0 6px #FCE3C4)' }} />
+                  <motion.path d={r.d} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" pathLength={1} strokeDasharray="0.1 1"
+                    initial={{ strokeDashoffset: 0.1, opacity: 0 }} animate={show ? { strokeDashoffset: -1, opacity: 1 } : undefined}
+                    transition={{ strokeDashoffset: { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 1.8 + i * 0.6, repeatDelay: 1 }, opacity: { delay: 1.8 } }}
+                    style={{ filter: 'drop-shadow(0 0 5px #E7A6F0)' }} />
                 )}
               </g>
             ))}
