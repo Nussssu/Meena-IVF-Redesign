@@ -8,7 +8,7 @@
   @media (min-width: 1920px) { html { font-size: 112.5%; } }
   @media (min-width: 2400px) { html { font-size: 125%; } }
   body {
-    @apply bg-paper text-ink font-sans antialiased;
+    @apply bg-mist text-ink font-sans antialiased;
     font-size: 1rem;
     line-height: 1.65;
     text-rendering: optimizeLegibility;

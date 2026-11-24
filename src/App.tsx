@@ -19,14 +19,14 @@ const Videos = named(() => import('./pages/Learn'), 'Videos')
 const Events = named(() => import('./pages/Learn'), 'Events')
 const Faq = named(() => import('./pages/Learn'), 'Faq')
 const Stories = named(() => import('./pages/Learn'), 'Stories')
-const Centres = lazy(() => import('./pages/Centres'))
+const CentreDetail = named(() => import('./pages/Centres'), 'CentreDetail')
 const Book = lazy(() => import('./pages/Book'))
 const Contact = lazy(() => import('./pages/Contact'))
 
 // Old WordPress URLs → new routes (so existing links and search results keep working)
 const legacy: Record<string, string> = {
   'about-us': '/about', 'why-meena-ivf': '/why-meena', 'why-meena-2': '/why-meena', 'meet-our-team': '/team', 'career': '/careers',
-  'our-doctors': '/doctors', 'our-center': '/centres', 'locations': '/centres', 'banani': '/centres#banani', 'khulna-opd-camp': '/centres#khulna', 'cumilla-opd': '/centres#cumilla',
+  'our-doctors': '/doctors', 'our-center': '/centres/banani', 'locations': '/centres/banani', 'banani': '/centres/banani', 'khulna-opd-camp': '/centres/khulna', 'cumilla-opd': '/centres/cumilla',
   'success-story': '/stories', 'patient-review': '/stories', 'fertility-blog': '/blog', 'doctors-speak': '/videos', 'gallery': '/events', 'resources': '/blog',
   'book-appointment': '/book', 'contact-us-2': '/contact', 'folliculometry-2': '/treatments/folliculometry',
   'dr-lubna-yasmin': '/doctors/dr-lubna-yasmin', 'dr-natasha-tiluttoma-aleem': '/doctors/dr-natasha-tiluttoma-aleem', 'dr-mosammat-bilkis-parvin': '/doctors/prof-dr-mosammat-bilkis-parvin',
@@ -49,7 +49,8 @@ const router = createBrowserRouter([
       { path: '/why-meena', element: <WhyMeena /> },
       { path: '/team', element: <Team /> },
       { path: '/careers', element: <Careers /> },
-      { path: '/centres', element: <Centres /> },
+      { path: '/centres', element: <Navigate to="/centres/banani" replace /> },
+      { path: '/centres/:slug', element: <CentreDetail /> },
       { path: '/stories', element: <Stories /> },
       { path: '/blog', element: <Blog /> },
       { path: '/blog/:slug', element: <BlogPost /> },

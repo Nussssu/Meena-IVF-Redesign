@@ -14,6 +14,8 @@ export type Centre = {
   summary: string
   services: string[]
   image: string
+  /** extra photos for the centre's own page */
+  gallery?: string[]
   map: string
 }
 
@@ -26,7 +28,8 @@ export const centres: Centre[] = [
     bestFor: 'Advanced evaluation, treatment and procedures',
     summary: 'Our flagship centre for comprehensive fertility evaluation, advanced treatment and specialised procedures, with an in-house IVF laboratory and operation theatre.',
     services: ['Advanced IVF laboratory', 'In-house operation theatre', 'Embryology laboratory', 'Ultrasound & diagnostics', 'Consultation rooms', 'Counselling & patient support', 'Comfortable waiting areas'],
-    image: '/img/reception.webp',
+    image: '/img/centre-banani-ref.webp',
+    gallery: ['/img/banani-gallery-1.webp', '/img/banani-gallery-2.webp', '/img/banani-gallery-3.webp'],
     map: 'House 11, Road 22, Block K, Banani, Dhaka 1213',
   },
   {
@@ -39,7 +42,7 @@ export const centres: Centre[] = [
     bestFor: 'Consultation & follow-up',
     summary: 'Consultation, initial evaluation, treatment guidance and follow-up for patients in Khulna and nearby regions, before advanced care in Dhaka when needed.',
     services: ['Fertility consultation', 'Initial evaluation', 'Treatment guidance', 'Follow-up visits'],
-    image: '/img/centre-khulna.webp',
+    image: '/img/centre-khulna-ref.webp',
     map: 'Good Health Clinic, 268 Khan Jahan Ali Road, Khulna',
   },
   {
@@ -52,7 +55,7 @@ export const centres: Centre[] = [
     bestFor: 'Early consultation access',
     summary: 'Begin consultation, receive evaluation guidance and continue follow-up closer to home before moving to advanced treatment planning.',
     services: ['Initial consultation', 'Medical history review', 'Diagnostic guidance', 'Follow-up support'],
-    image: '/img/centre-cumilla.webp',
+    image: '/img/centre-cumilla-ref.webp',
     map: 'Jahanara Tower, Jhawtala, Cumilla',
   },
 ]

@@ -316,9 +316,8 @@ function MobileActionBar() {
 function FloatingWhatsApp() {
   return (
     <a href={waLink()} target="_blank" rel="noreferrer" aria-label="Chat on WhatsApp"
-      className="group fixed bottom-6 right-6 z-40 hidden items-center gap-3 rounded-full bg-whatsapp py-3 pl-3 pr-5 text-whatsapp-ink shadow-lift transition hover:-translate-y-0.5 lg:flex">
+      className="group fixed bottom-6 right-6 z-40 hidden items-center rounded-full bg-whatsapp p-3 text-whatsapp-ink shadow-lift transition hover:-translate-y-0.5 lg:flex">
       <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-whatsapp"><WhatsAppIcon className="h-5 w-5" /></span>
-      <span className="text-sm font-semibold">Chat with us</span>
     </a>
   )
 }

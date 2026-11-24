@@ -80,7 +80,7 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
 }
 
 export function PageHero({ eyebrow, title, text, crumbs, children, image, tone = 'mist' }: { eyebrow?: string; title: ReactNode; text?: ReactNode; crumbs: { label: string; to?: string }[]; children?: ReactNode; image?: string; tone?: 'mist' | 'blush' | 'paper' }) {
-  const bg = tone === 'mist' ? 'bg-mist' : tone === 'blush' ? 'bg-blush' : 'bg-paper'
+  const bg = tone === 'mist' ? 'bg-mist' : tone === 'blush' ? 'bg-blush' : 'bg-mist'
   return (
     <section className={`relative overflow-hidden ${bg} grain`}>
       <div aria-hidden className="pointer-events-none absolute -right-40 -top-40 h-[520px] w-[520px] rounded-full bg-[radial-gradient(closest-side,rgba(128,41,143,.10),transparent)]" />
