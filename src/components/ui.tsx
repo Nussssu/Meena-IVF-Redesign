@@ -79,6 +79,39 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
   )
 }
 
+/* Photo hero with a strong colour wash on the left, title + tagline, breadcrumb trail, and a curved bottom edge */
+export function CurveHero({ image, alt = '', title, subtitle, crumbs }: { image: string; alt?: string; title: ReactNode; subtitle?: ReactNode; crumbs: { label: string; to?: string }[] }) {
+  return (
+    <section className="relative isolate overflow-hidden bg-plum-900">
+      <img src={image} alt={alt} className="absolute inset-0 -z-20 h-full w-full object-cover" />
+      <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/95 via-plum-900/75 to-plum-900/10" />
+      <div className="container-x grid min-h-[24rem] items-center gap-6 pb-20 pt-32 md:min-h-[28rem] md:pb-28 md:pt-36 lg:min-h-[30rem] lg:grid-cols-[1fr_auto] lg:gap-12">
+        <Reveal>
+          <h1 className="display max-w-3xl text-balance !text-paper">{title}</h1>
+          {subtitle && <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-paper/90 md:text-xl">{subtitle}</p>}
+        </Reveal>
+        <Reveal delay={0.1}>
+          <nav aria-label="Breadcrumb" className="text-sm text-paper/85">
+            <ol className="flex flex-wrap items-center gap-x-1.5">
+              <li><Link to="/" className="inline-flex min-h-[2.75rem] items-center hover:text-white">Home</Link></li>
+              {crumbs.map((it) => (
+                <li key={it.label} className="flex items-center gap-1.5">
+                  <span aria-hidden className="opacity-70">&raquo;</span>
+                  {it.to ? <Link to={it.to} className="inline-flex min-h-[2.75rem] items-center hover:text-white">{it.label}</Link> : <span aria-current="page" className="text-white">{it.label}</span>}
+                </li>
+              ))}
+            </ol>
+          </nav>
+        </Reveal>
+      </div>
+      {/* curved bottom edge, in the page background colour */}
+      <svg aria-hidden viewBox="0 0 1440 80" preserveAspectRatio="none" className="absolute inset-x-0 bottom-[-1px] h-10 w-full md:h-16 lg:h-20">
+        <path d="M0 40 Q700 112 1440 0 L1440 80 L0 80 Z" className="fill-mist" />
+      </svg>
+    </section>
+  )
+}
+
 export function PageHero({ eyebrow, title, text, crumbs, children, image, tone = 'mist' }: { eyebrow?: string; title: ReactNode; text?: ReactNode; crumbs: { label: string; to?: string }[]; children?: ReactNode; image?: string; tone?: 'mist' | 'blush' | 'paper' }) {
   const bg = tone === 'mist' ? 'bg-mist' : tone === 'blush' ? 'bg-blush' : 'bg-mist'
   return (

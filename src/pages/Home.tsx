@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
-import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, GraduationCap, Heart, MapPin, Microscope, Pause, Play, ShieldCheck, Stethoscope } from 'lucide-react'
-import { CTABand, RL, Reveal, SectionHeader, WhatsAppIcon, useMeta } from '../components/ui'
+import { Activity, ArrowLeft, ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, Egg, FlaskConical, GraduationCap, Heart, MapPin, Microscope, Pause, Play, ScanLine, ShieldCheck, Snowflake, Stethoscope, Syringe, TestTube } from 'lucide-react'
+import { RL, Reveal, SectionHeader, WhatsAppIcon, useMeta } from '../components/ui'
 import { DoctorCard, TodayBadge } from '../components/cards'
 import { Magnetic, ScrollRibbon } from '../components/motion'
 import { Embryo, EMBRYO_LABELS } from '../components/Embryo'
@@ -80,9 +80,11 @@ function Hero() {
 /* ───────────────── 2. Arch window + manifesto ───────────────── */
 const MANIFESTO = 'Every family begins with hope. We bring the science, the specialists and the patience to carry it, one gentle step at a time, until the day you hold your baby.'
 
-/* "M" outline (0–1 inside its box) and where each point ends up when the window fills the screen */
-const M_SHAPE: [number, number][] = [[0, 1], [0, 0], [0.24, 0], [0.5, 0.42], [0.76, 0], [1, 0], [1, 1], [0.78, 1], [0.78, 0.4], [0.5, 0.84], [0.22, 0.4], [0.22, 1]]
-const M_FULL: [number, number][] = [[0, 1], [0, 0], [0.24, 0], [0.5, 0], [0.76, 0], [1, 0], [1, 1], [0.78, 1], [0.78, 1], [0.5, 1], [0.22, 1], [0.22, 1]]
+/* "M" outline traced from the logo mark (0–1 inside its box, top edge left→right then bottom edge right→left),
+   and where each point ends up when the window fills the screen: top-edge points go to the top, bottom-edge points to the bottom */
+const M_SHAPE: [number, number][] = [[0.0, 0.926], [0.018, 0.866], [0.037, 0.801], [0.054, 0.738], [0.072, 0.678], [0.091, 0.61], [0.109, 0.55], [0.127, 0.49], [0.146, 0.425], [0.163, 0.365], [0.181, 0.305], [0.2, 0.24], [0.218, 0.177], [0.236, 0.114], [0.255, 0.063], [0.272, 0.033], [0.292, 0.014], [0.309, 0.003], [0.327, 0.0], [0.346, 0.003], [0.364, 0.014], [0.381, 0.027], [0.401, 0.057], [0.418, 0.104], [0.436, 0.161], [0.455, 0.232], [0.473, 0.294], [0.49, 0.354], [0.51, 0.36], [0.527, 0.297], [0.545, 0.226], [0.564, 0.155], [0.582, 0.095], [0.599, 0.054], [0.619, 0.025], [0.636, 0.011], [0.654, 0.003], [0.673, 0.0], [0.691, 0.005], [0.708, 0.014], [0.728, 0.035], [0.745, 0.068], [0.764, 0.12], [0.782, 0.183], [0.8, 0.245], [0.819, 0.308], [0.837, 0.371], [0.854, 0.433], [0.873, 0.496], [0.891, 0.556], [0.909, 0.619], [0.928, 0.681], [0.946, 0.744], [0.963, 0.807], [0.982, 0.872], [1.0, 0.932], [1.0, 0.943], [0.982, 0.965], [0.963, 0.978], [0.946, 0.989], [0.928, 0.995], [0.909, 1.0], [0.891, 1.0], [0.873, 0.995], [0.854, 0.989], [0.837, 0.978], [0.819, 0.965], [0.8, 0.946], [0.782, 0.924], [0.764, 0.896], [0.745, 0.858], [0.728, 0.809], [0.708, 0.744], [0.691, 0.684], [0.673, 0.627], [0.654, 0.678], [0.636, 0.738], [0.619, 0.801], [0.599, 0.866], [0.582, 0.921], [0.564, 0.956], [0.545, 0.981], [0.527, 0.992], [0.51, 0.997], [0.49, 0.997], [0.473, 0.992], [0.455, 0.978], [0.436, 0.954], [0.418, 0.916], [0.401, 0.861], [0.381, 0.796], [0.364, 0.733], [0.346, 0.67], [0.327, 0.621], [0.309, 0.676], [0.292, 0.738], [0.272, 0.804], [0.255, 0.853], [0.236, 0.891], [0.218, 0.918], [0.2, 0.94], [0.181, 0.959], [0.163, 0.973], [0.146, 0.981], [0.127, 0.989], [0.109, 0.992], [0.091, 0.992], [0.072, 0.989], [0.054, 0.981], [0.037, 0.973], [0.018, 0.959], [0.0, 0.935]]
+const M_FULL: [number, number][] = [[0.0, 0], [0.018, 0], [0.037, 0], [0.054, 0], [0.072, 0], [0.091, 0], [0.109, 0], [0.127, 0], [0.146, 0], [0.163, 0], [0.181, 0], [0.2, 0], [0.218, 0], [0.236, 0], [0.255, 0], [0.272, 0], [0.292, 0], [0.309, 0], [0.327, 0], [0.346, 0], [0.364, 0], [0.381, 0], [0.401, 0], [0.418, 0], [0.436, 0], [0.455, 0], [0.473, 0], [0.49, 0], [0.51, 0], [0.527, 0], [0.545, 0], [0.564, 0], [0.582, 0], [0.599, 0], [0.619, 0], [0.636, 0], [0.654, 0], [0.673, 0], [0.691, 0], [0.708, 0], [0.728, 0], [0.745, 0], [0.764, 0], [0.782, 0], [0.8, 0], [0.819, 0], [0.837, 0], [0.854, 0], [0.873, 0], [0.891, 0], [0.909, 0], [0.928, 0], [0.946, 0], [0.963, 0], [0.982, 0], [1.0, 0], [1.0, 1], [0.982, 1], [0.963, 1], [0.946, 1], [0.928, 1], [0.909, 1], [0.891, 1], [0.873, 1], [0.854, 1], [0.837, 1], [0.819, 1], [0.8, 1], [0.782, 1], [0.764, 1], [0.745, 1], [0.728, 1], [0.708, 1], [0.691, 1], [0.673, 1], [0.654, 1], [0.636, 1], [0.619, 1], [0.599, 1], [0.582, 1], [0.564, 1], [0.545, 1], [0.527, 1], [0.51, 1], [0.49, 1], [0.473, 1], [0.455, 1], [0.436, 1], [0.418, 1], [0.401, 1], [0.381, 1], [0.364, 1], [0.346, 1], [0.327, 1], [0.309, 1], [0.292, 1], [0.272, 1], [0.255, 1], [0.236, 1], [0.218, 1], [0.2, 1], [0.181, 1], [0.163, 1], [0.146, 1], [0.127, 1], [0.109, 1], [0.091, 1], [0.072, 1], [0.054, 1], [0.037, 1], [0.018, 1], [0.0, 1]]
+const M_ASPECT = 2 // logo M is twice as wide as it is tall
 
 function ArchManifesto() {
   const reduce = useReducedMotion()
@@ -90,8 +92,12 @@ function ArchManifesto() {
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start start', 'end end'] })
   // The photo starts as a large "M" and opens out to the full screen as you scroll
-  const box = desktop ? { l: 29, r: 71, t: 14, b: 88 } : { l: 8, r: 92, t: 24, b: 72 }
   const clip = useTransform(p, (v) => {
+    // box keeps the logo's proportions: width in % of the screen, height derived from it
+    const wPct = desktop ? 56 : 84
+    const hPct = typeof window === 'undefined' ? 30 : (wPct / 100) * window.innerWidth / M_ASPECT / window.innerHeight * 100
+    const cy = desktop ? 52 : 48
+    const box = { l: (100 - wPct) / 2, r: (100 + wPct) / 2, t: cy - hPct / 2, b: cy + hPct / 2 }
     const k = Math.min(Math.max(v / 0.42, 0), 1)
     const e = 1 - Math.pow(1 - k, 3) // ease-out
     const pts = M_SHAPE.map(([u0, v0], i) => {
@@ -138,7 +144,7 @@ function ManifestoWord({ p, i, n, children }: { p: MotionValue<number>; i: numbe
   const opacity = useTransform(p, [start, start + 0.05], [0, 1])
   const y = useTransform(p, [start, start + 0.05], [8, 0])
   const em = children === 'hope.' || children === 'baby.'
-  return <motion.span style={{ opacity, y }} className={`mx-[0.12em] inline-block ${em ? 'italic text-lilac' : ''}`}>{children}</motion.span>
+  return <motion.span style={{ opacity, y }} className={`mx-[0.12em] inline-block ${em ? 'italic' : ''}`}>{children}</motion.span>
 }
 
 /* ───────────────── 3. Journey selector ───────────────── */
@@ -162,7 +168,7 @@ function JourneySelector() {
             return (
               <Reveal as="li" key={x.key} delay={i * 0.06} className="h-full">
                 <Link to={c.to} className="group flex h-full flex-col">
-                  <div className="relative aspect-[9/10] overflow-hidden rounded-md bg-mist">
+                  <div className="relative aspect-[9/10] overflow-hidden rounded-none bg-mist">
                     <img src={c.img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full object-cover ${c.pos} transition duration-700 group-hover:scale-[1.03]`} />
                   </div>
                   <h3 className="mt-6 font-sans text-xl font-semibold leading-snug tracking-[0.01em] text-ink transition-colors group-hover:text-plum md:text-2xl">{c.label}</h3>
@@ -180,14 +186,14 @@ function JourneySelector() {
 
 /* ───────────────── 4. Treatment index ───────────────── */
 const INDEX = [
-  { slug: 'ivf', img: '/img/lab-microscope.webp' },
-  { slug: 'icsi', img: '/img/embryo-1.webp' },
-  { slug: 'iui', img: '/img/consult.webp' },
-  { slug: 'egg-freezing', img: '/img/egg-1.webp' },
-  { slug: 'embryo-freezing', img: '/img/embryo-3.webp' },
-  { slug: 'folliculometry', img: '/img/folliculometry.webp' },
-  { slug: 'laparoscopy', img: '/img/laparoscopy.webp' },
-  { slug: 'tesa', img: '/img/semen-2.webp' },
+  { slug: 'ivf', img: '/img/lab-microscope.webp', Icon: FlaskConical },
+  { slug: 'icsi', img: '/img/embryo-1.webp', Icon: Microscope },
+  { slug: 'iui', img: '/img/consult.webp', Icon: Syringe },
+  { slug: 'egg-freezing', img: '/img/egg-1.webp', Icon: Egg },
+  { slug: 'embryo-freezing', img: '/img/embryo-3.webp', Icon: Snowflake },
+  { slug: 'folliculometry', img: '/img/folliculometry.webp', Icon: ScanLine },
+  { slug: 'laparoscopy', img: '/img/laparoscopy.webp', Icon: Activity },
+  { slug: 'tesa', img: '/img/semen-2.webp', Icon: TestTube },
 ]
 
 function TreatmentIndex() {
@@ -197,24 +203,21 @@ function TreatmentIndex() {
         <SectionHeader title={<>Wherever you are, there&rsquo;s a <em className="text-plum">next step</em>.</>}
           text="From your first scan to IVF, every treatment you need is here, planned just for you."
           action={<Link to="/treatments" className="btn-secondary">All 18 treatments <ArrowRight className="h-4 w-4" /></Link>} />
-        <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">
           {INDEX.map((it, i) => {
             const t = treatmentBySlug(it.slug)!
             return (
               <Reveal as="li" key={it.slug} delay={i * 0.03} y={12} className="h-full">
+                {/* Clean square card; on hover it turns plum and the treatment photo fades in on the right */}
                 <Link to={`/treatments/${t.slug}`}
-                  className="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-paper shadow-soft transition duration-300 ease-out hover:-translate-y-1 hover:border-plum hover:bg-plum hover:shadow-lift focus-visible:border-plum">
-                  <div className="relative aspect-[4/3] overflow-hidden">
-                    <img src={it.img} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-plum-900/40 via-transparent to-transparent" />
-                    <div className="absolute inset-x-0 top-0 flex items-start justify-end gap-3 p-4">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white text-ink transition duration-300 group-hover:rotate-45 group-hover:text-plum"><ArrowUpRight className="h-4 w-4" /></span>
-                    </div>
-                  </div>
-                  <div className="relative flex flex-1 flex-col p-5 md:p-6">
-                    <p className="text-eyebrow uppercase text-muted transition group-hover:text-lilac">{t.full}</p>
-                    <p className="mt-2 font-display text-[1.75rem] leading-none text-ink transition group-hover:text-white md:text-[2rem]">{t.name}</p>
-                    <p className="mt-3 line-clamp-2 text-sm leading-snug text-muted transition group-hover:text-white/80">{t.short}</p>
+                  className="group relative flex h-full flex-col overflow-hidden border border-line bg-white p-7 transition duration-300 ease-out hover:border-plum hover:bg-plum hover:shadow-lift focus-visible:border-plum md:p-8">
+                  <img src={it.img} alt="" loading="lazy" className="pointer-events-none absolute inset-y-0 right-0 h-full w-[75%] object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
+                  <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-plum via-plum/90 to-plum/40 opacity-0 transition duration-500 group-hover:opacity-100" />
+                  <div className="relative flex flex-1 flex-col">
+                    <span className="grid h-14 w-14 place-items-center bg-lilac/60 text-plum transition duration-300 group-hover:bg-white"><it.Icon className="h-6 w-6" strokeWidth={1.75} /></span>
+                    <p className="mt-8 font-display text-[1.75rem] leading-none text-ink transition group-hover:text-white md:text-[2rem]">{t.name}</p>
+                    <p className="mt-3 line-clamp-2 text-[0.9375rem] leading-relaxed text-muted transition group-hover:text-white/85">{t.short}</p>
+                    <span className="mt-auto inline-flex items-center gap-1.5 pt-7 text-[0.9375rem] font-medium text-plum transition group-hover:text-white">Learn more <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
                   </div>
                 </Link>
               </Reveal>
@@ -237,7 +240,7 @@ function StoryHeading({ light = false }: { light?: boolean }) {
   return (
     <>
       <p className={`eyebrow mb-4 ${light ? '!text-lilac' : ''}`}>The IVF journey</p>
-      <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>From one cell to a <em className={light ? 'text-lilac' : 'text-plum'}>new life</em>.</h2>
+      <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>From one cell to a <em className="text-inherit">new life</em>.</h2>
       <p className={`mt-4 max-w-md ${light ? 'text-paper/70' : 'text-ink-2'}`}>Six steps, about four to six weeks. Knowing what comes next makes everything lighter.</p>
     </>
   )
@@ -374,41 +377,56 @@ function DoctorDetails({ doc, compact = false }: { doc: (typeof doctors)[number]
 }
 
 function SpecialistsSticky() {
+  const reduce = useReducedMotion()
+  const n = doctors.length
+  const ref = useRef<HTMLElement>(null)
   const [active, setActive] = useState(0)
+  const dir = useRef(1)
   const d = doctors[active]
   const tint = d.tint === 'blush' ? 'bg-blush' : d.tint === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
+  // The section pins to the screen; scrolling brings each doctor in from the right, one after another
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
+  useMotionValueEvent(scrollYProgress, 'change', (p) => {
+    const i = Math.min(n - 1, Math.max(0, Math.floor(p * n)))
+    setActive((cur) => { if (i !== cur) dir.current = i > cur ? 1 : -1; return i })
+  })
+  const slide = {
+    enter: (k: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: k > 0 ? 120 : -120 }),
+    center: { opacity: 1, x: 0 },
+    exit: (k: number) => (reduce ? { opacity: 0 } : { opacity: 0, x: k > 0 ? -120 : 120 }),
+  }
   return (
-    <section className="section bg-mist">
-      <div className="container-x">
-        <SectionHeader title={<>Meet our <em className="text-plum">specialists</em></>} />
-        <div className="grid grid-cols-[.85fr_1.15fr] gap-16">
-          <div className="sticky top-[12vh] h-[76vh] self-start">
-            <div className={`arch relative h-full overflow-hidden transition-colors duration-500 ${tint}`}>
-              <div aria-hidden className="arch-full absolute inset-x-[12%] bottom-0 top-[12%] bg-white/50" />
-              <AnimatePresence mode="popLayout">
-                <motion.img key={d.slug} src={d.image} alt={d.name}
-                  initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.3, ease: 'easeOut' }}
-                  className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-auto object-contain object-bottom" />
+    <section ref={ref} className="relative bg-mist" style={{ height: `${n * 85 + 15}vh` }}>
+      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="container-x w-full">
+          <SectionHeader title={<>Meet our <em className="text-plum">specialists</em></>} />
+          <div className="grid grid-cols-[.85fr_1.15fr] items-center gap-16">
+            <div className="h-[min(64vh,40rem)]">
+              <div className={`arch relative h-full overflow-hidden transition-colors duration-500 ${tint}`}>
+                <div aria-hidden className="arch-full absolute inset-x-[12%] bottom-0 top-[12%] bg-white/50" />
+                <AnimatePresence mode="popLayout" initial={false} custom={dir.current}>
+                  <motion.img key={d.slug} src={d.image} alt={d.name} custom={dir.current}
+                    variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.45, ease: EASE }}
+                    className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-auto object-contain object-bottom" />
+                </AnimatePresence>
+                <div className="absolute bottom-6 left-5"><TodayBadge doctor={d} /></div>
+                <div className="absolute bottom-5 right-5 rounded-full bg-white/90 px-4 py-2 font-display text-lg shadow-soft">0{active + 1} <span className="text-muted">/ 0{n}</span></div>
+              </div>
+            </div>
+            <div className="relative">
+              <AnimatePresence mode="wait" initial={false} custom={dir.current}>
+                <motion.div key={d.slug} custom={dir.current} variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.4, ease: EASE }}>
+                  <h3 className="font-display leading-[1.05] text-plum-900" style={{ fontSize: 'clamp(2rem, 1.2rem + 1.8vw, 3.25rem)' }}><Link to={`/doctors/${d.slug}`} className="hover:text-plum">{d.name}</Link></h3>
+                  <p className="mt-3 text-lg text-ink-2">{d.role}</p>
+                  <DoctorDetails doc={d} />
+                  <div className="mt-7 flex flex-wrap gap-4">
+                    <Link to={`/book?doctor=${d.slug}`} className="btn-primary !min-h-[3.25rem] !px-8">Book with {d.short}</Link>
+                    <Link to={`/doctors/${d.slug}`} className="btn-secondary">View profile</Link>
+                  </div>
+                </motion.div>
               </AnimatePresence>
-              <div className="absolute bottom-6 left-5"><TodayBadge doctor={d} /></div>
-              <div className="absolute bottom-5 right-5 rounded-full bg-white/90 px-4 py-2 font-display text-lg shadow-soft">0{active + 1} <span className="text-muted">/ 0{doctors.length}</span></div>
             </div>
           </div>
-          <ol>
-            {doctors.map((doc, i) => (
-              <motion.li key={doc.slug} onViewportEnter={() => setActive(i)} viewport={{ margin: '-48% 0px -48% 0px' }}
-                className={`flex min-h-[76vh] flex-col justify-center py-12 transition-opacity duration-300 ${active === i ? 'opacity-100' : 'opacity-40'}`}>
-                <p className="self-start rounded-full bg-lilac/80 px-4 py-1.5 text-sm font-medium text-plum-700">{doc.title} · {doc.experience}+ years</p>
-                <h3 className="mt-4 font-display leading-[1.05] text-plum-900" style={{ fontSize: 'clamp(2rem, 1.2rem + 1.8vw, 3.25rem)' }}><Link to={`/doctors/${doc.slug}`} className="hover:text-plum">{doc.name}</Link></h3>
-                <p className="mt-3 text-lg text-ink-2">{doc.role}</p>
-                <DoctorDetails doc={doc} />
-                <div className="mt-7 flex flex-wrap gap-4">
-                  <Link to={`/book?doctor=${doc.slug}`} className="btn-primary !min-h-[3.25rem] !px-8">Book with {doc.short}</Link>
-                  <Link to={`/doctors/${doc.slug}`} className="btn-secondary">View profile</Link>
-                </div>
-              </motion.li>
-            ))}
-          </ol>
         </div>
       </div>
     </section>
@@ -441,23 +459,18 @@ function SpecialistsCarousel() {
         ))}
         <div className="w-px shrink-0" />
       </div>
+      {/* swipe hint */}
+      <p className="mt-5 flex items-center justify-center gap-2 text-sm font-medium text-ink-2">
+        <ArrowLeft className="h-4 w-4 text-plum" />
+        Swipe to see all doctors
+        <motion.span animate={{ x: [0, 6, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}><ArrowRight className="h-4 w-4 text-plum" /></motion.span>
+      </p>
     </section>
   )
 }
 
 /* ───────────────── 7. Why Meena ───────────────── */
 const WHY_VIDEO = '/img/IVF%20Video.mp4'
-// Stepper geometry (lg+): fixed row pitch so the curved connector can be drawn in px
-const WHY_ROW = 68, WHY_GAP = 12, WHY_X = [14, 30, 42, 30, 16, 24]
-function curveThrough(pts: [number, number][]) {
-  // Catmull-Rom → cubic Bézier, gives one smooth line through every node
-  let d = `M${pts[0][0]},${pts[0][1]}`
-  for (let i = 0; i < pts.length - 1; i++) {
-    const p0 = pts[i - 1] ?? pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] ?? p2
-    d += ` C${p1[0] + (p2[0] - p0[0]) / 6},${p1[1] + (p2[1] - p0[1]) / 6} ${p2[0] - (p3[0] - p1[0]) / 6},${p2[1] - (p3[1] - p1[1]) / 6} ${p2[0]},${p2[1]}`
-  }
-  return d
-}
 
 function WhyBento() {
   const reduce = useReducedMotion()
@@ -477,12 +490,9 @@ function WhyBento() {
   ]
   const n = items.length
   const cur = items[active]
-  const pts = WHY_X.map((x, i) => [x, i * (WHY_ROW + WHY_GAP) + WHY_ROW / 2] as [number, number])
-  const svgH = n * (WHY_ROW + WHY_GAP) - WHY_GAP
 
-  // Desktop: the section pins to the screen and scrolling walks the line from dot to dot
+  // Desktop: the section pins to the screen and scrolling steps through the options
   const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] })
-  const lineFill = useTransform(scrollYProgress, [0, (n - 1) / n], [0, 1], { clamp: true })
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
     if (desktop) setActive(Math.min(n - 1, Math.max(0, Math.floor(p * n))))
   })
@@ -507,7 +517,7 @@ function WhyBento() {
         <Reveal className="mb-10 md:mb-14 lg:mb-8">
           <h2 className="h2 lg:whitespace-nowrap">Why couples trust <em className="text-plum">Meena IVF</em></h2>
         </Reveal>
-        <div className="grid gap-5 lg:grid-cols-[1.15fr_0.95fr_1fr] lg:items-stretch">
+        <div className="grid gap-5 lg:grid-cols-3 lg:items-stretch">
           {/* Video screen */}
           <Reveal className="relative min-h-[22rem] overflow-hidden rounded-panel bg-plum-900 shadow-lift">
             <video ref={videoRef} src={WHY_VIDEO} autoPlay={!reduce} muted loop playsInline preload="metadata"
@@ -526,23 +536,16 @@ function WhyBento() {
             </div>
           </Reveal>
 
-          {/* Curved stepper */}
-          <Reveal delay={0.05} className="relative">
-            <svg aria-hidden className="pointer-events-none absolute left-0 top-0 hidden lg:block" width="60" height={svgH} viewBox={`0 0 60 ${svgH}`}>
-              <path d={curveThrough(pts)} fill="none" stroke="#80298F" strokeOpacity=".22" strokeWidth="1.5" />
-              <motion.path d={curveThrough(pts)} fill="none" stroke="#80298F" strokeWidth="2" strokeLinecap="round" style={{ pathLength: lineFill }} />
-              {pts.map(([x, y], i) => (
-                <circle key={i} cx={x} cy={y} r={i === active ? 6.5 : 5} fill={i <= active ? '#80298F' : '#F3EEF6'} stroke="#80298F" strokeOpacity={i <= active ? 1 : 0.45} strokeWidth="1.5"
-                  style={{ transition: 'fill .3s, r .3s' }} />
-              ))}
-            </svg>
-            <ul className="flex flex-col gap-3 lg:gap-[12px]">
+          {/* Options + detail share one box; each half matches the video's width */}
+          <Reveal delay={0.05} className="grid overflow-hidden rounded-panel bg-white/60 shadow-lift ring-1 ring-line lg:col-span-2 lg:grid-cols-[1fr_calc((100%-1.25rem)/2)]">
+          <div className="p-4 md:p-5">
+            <ul className="flex h-full flex-col justify-center gap-3 lg:gap-[12px]">
               {items.map((it, i) => {
                 const on = i === active
                 return (
-                  <li key={it.label} className="lg:h-[68px]" style={{ ['--why-x' as string]: `${WHY_X[i] + 16}px` }}>
-                    <button type="button" onClick={() => pick(i)} aria-pressed={on}
-                      className={`flex h-full w-full items-center gap-3 rounded-full border py-2 pl-2 pr-5 text-left transition duration-300 lg:ml-[var(--why-x)] lg:w-[calc(100%-var(--why-x))] ${on ? 'border-plum/25 bg-white shadow-[0_14px_30px_-14px_rgba(128,41,143,.55)]' : 'border-line bg-white/70 hover:bg-white'}`}>
+                  <li key={it.label} className="lg:h-[68px]">
+                    <button type="button" onClick={() => pick(i)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} aria-pressed={on}
+                      className={`flex h-full w-full items-center gap-3 rounded-full border py-2 pl-2 pr-5 text-left transition duration-300 ${on ? 'border-plum/25 bg-white shadow-[0_14px_30px_-14px_rgba(128,41,143,.55)]' : 'border-line bg-white/70 hover:bg-white'}`}>
                       <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${on ? 'bg-plum text-white' : 'bg-lilac/70 text-ink'}`}><it.Icon className="h-5 w-5" strokeWidth={1.75} /></span>
                       <span className={`text-[0.9375rem] font-semibold leading-snug ${on ? 'text-ink' : 'text-ink-2'}`}>{it.label}</span>
                     </button>
@@ -550,34 +553,33 @@ function WhyBento() {
                 )
               })}
             </ul>
-          </Reveal>
+          </div>
 
-          {/* Detail panel with an image per option */}
-          <Reveal delay={0.1} className="relative flex min-h-[30rem] flex-col overflow-hidden rounded-panel bg-gradient-to-br from-plum-700 via-plum-800 to-plum-900 text-paper shadow-lift">
-            <div className="relative h-44 shrink-0 overflow-hidden lg:h-[42%]">
-              <AnimatePresence initial={false}>
-                <motion.div key={cur.img} className="absolute inset-0"
-                  initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} exit={reduce ? undefined : { opacity: 0 }}
-                  transition={{ duration: 0.6, ease: EASE }}>
-                  {/* blurred copy fills the frame; the full photo sits on top uncropped */}
-                  <img src={`/img/${cur.img}.webp`} alt="" aria-hidden className="absolute inset-0 h-full w-full scale-110 object-cover opacity-70 blur-xl" />
-                  <img src={`/img/${cur.img}.webp`} alt={cur.alt} loading="lazy" className="absolute inset-0 h-full w-full object-contain" />
-                </motion.div>
-              </AnimatePresence>
-              <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-b from-transparent to-plum-800" />
+          {/* Inset card: clean photo on top, text below */}
+          <div className="p-4 md:p-5 lg:pl-0">
+            <div className="flex h-full min-h-[28rem] flex-col overflow-hidden rounded-panel bg-gradient-to-br from-plum-700 via-plum-800 to-plum-900 text-paper ring-1 ring-line">
+              <div className="relative h-48 shrink-0 overflow-hidden lg:h-[45%]">
+                <AnimatePresence initial={false}>
+                  <motion.img key={cur.img} src={`/img/${cur.img}.webp`} alt={cur.alt} loading="lazy"
+                    className="absolute inset-0 h-full w-full object-cover"
+                    initial={reduce ? false : { opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={reduce ? undefined : { opacity: 0 }}
+                    transition={{ duration: 0.6, ease: EASE }} />
+                </AnimatePresence>
+              </div>
+              <div className="flex flex-1 flex-col px-6 pb-6 pt-5 md:px-7 md:pb-7" aria-live="polite">
+                <AnimatePresence mode="wait">
+                  <motion.div key={active} className="mb-5" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }}>
+                    <p className="text-eyebrow font-semibold uppercase text-paper/85">{cur.label}</p>
+                    <h3 className="mt-3 font-display text-2xl leading-[1.1] !text-paper xl:text-[2rem]">{cur.head} <em className="text-[#E7A6F0]">{cur.em}</em></h3>
+                    <p className="mt-3 max-w-md leading-relaxed text-paper/85">{cur.text}</p>
+                  </motion.div>
+                </AnimatePresence>
+                <Link to="/why-meena" className="btn-light group mt-auto shrink-0 self-start !text-ink">
+                  Explore Our Approach <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+                </Link>
+              </div>
             </div>
-            <div className="relative flex flex-1 flex-col px-7 pb-7 pt-6 md:px-8 md:pb-8 md:pt-7" aria-live="polite">
-              <AnimatePresence mode="wait">
-                <motion.div key={active} className="mb-6" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }}>
-                  <p className="text-eyebrow font-semibold uppercase text-paper/85">{cur.label}</p>
-                  <h3 className="mt-4 font-display text-3xl leading-[1.1] !text-paper xl:text-[2.25rem]">{cur.head} <em className="text-[#E7A6F0]">{cur.em}</em></h3>
-                  <p className="mt-3 max-w-md leading-relaxed text-paper/85">{cur.text}</p>
-                </motion.div>
-              </AnimatePresence>
-              <Link to="/why-meena" className="btn-light group mt-auto shrink-0 self-start !text-ink">
-                Explore Our Approach <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-              </Link>
-            </div>
+          </div>
           </Reveal>
         </div>
       </div>
@@ -719,7 +721,7 @@ function CentresArches() {
         <div ref={stage} className="relative hidden aspect-[1000/340] md:block">
           <svg aria-hidden viewBox="0 0 1000 340" className="absolute inset-0 h-full w-full overflow-visible">
             <defs>
-              <radialGradient id="tip-glow"><stop offset="0%" stopColor="#FFE7C2" /><stop offset="35%" stopColor="#E7A6F0" stopOpacity=".7" /><stop offset="100%" stopColor="#E7A6F0" stopOpacity="0" /></radialGradient>
+              <radialGradient id="tip-glow"><stop offset="0%" stopColor="#E7A6F0" stopOpacity=".85" /><stop offset="100%" stopColor="#E7A6F0" stopOpacity="0" /></radialGradient>
             </defs>
             {/* ground rings and glow under each pin */}
             {list.map((c) => {
@@ -734,16 +736,17 @@ function CentresArches() {
                       initial={reduce ? false : { opacity: 0 }} animate={show ? { opacity: 0.35 - i * 0.09 } : undefined}
                       transition={{ duration: 0.8, delay: pinDelay(c.slug) + 0.3 + i * 0.12 }} />
                   ))}
-                  {!reduce && (
-                    <motion.ellipse rx={rx} ry={ry} fill="none" stroke="#B25FBF" strokeWidth="1.5"
-                      initial={{ scale: 1, opacity: 0 }} animate={{ scale: [1, 2.6], opacity: [0.5, 0] }}
-                      transition={{ duration: 2.6, repeat: Infinity, ease: 'easeOut', delay: pinDelay(c.slug) + 1 }} />
-                  )}
+                  {/* two rings leave the tip and each settles into one of the outer ground lines */}
+                  {!reduce && [1.8, 2.7].map((k, i) => (
+                    <motion.ellipse key={k} rx={rx} ry={ry} fill="none" stroke="#B25FBF" strokeWidth="1.5" vectorEffect="non-scaling-stroke"
+                      initial={{ scale: 1, opacity: 0 }} animate={{ scale: [1, k, k], opacity: [0.6, 0.35 - (i + 1) * 0.09, 0] }}
+                      transition={{ duration: 2.6, times: [0, 0.8, 1], repeat: Infinity, ease: 'easeOut', delay: pinDelay(c.slug) + 1 + i * 0.5 }} />
+                  ))}
                   <ellipse rx={big ? 46 : 30} ry={big ? 14 : 9} fill="url(#tip-glow)" />
                 </g>
               )
             })}
-            {/* routes: dashed line fades in after the pins, then a soft light travels along it */}
+            {/* routes: dashed line fades in after the pins */}
             {routes.map((r, i) => (
               <g key={i}>
                 <motion.path d={r.d} fill="none" stroke="#9440A0" strokeWidth="1.6" strokeDasharray="5 6" strokeLinecap="round"
@@ -752,12 +755,6 @@ function CentresArches() {
                 <motion.circle cx={r.end[0]} cy={r.end[1]} r="4" fill="#9440A0"
                   initial={reduce ? false : { opacity: 0, scale: 0 }} animate={show ? { opacity: 1, scale: 1 } : undefined}
                   transition={{ duration: 0.4, delay: 1.1 + i * 0.15 }} />
-                {!reduce && (
-                  <motion.path d={r.d} fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" pathLength={1} strokeDasharray="0.1 1"
-                    initial={{ strokeDashoffset: 0.1, opacity: 0 }} animate={show ? { strokeDashoffset: -1, opacity: 1 } : undefined}
-                    transition={{ strokeDashoffset: { duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 1.8 + i * 0.6, repeatDelay: 1 }, opacity: { delay: 1.8 } }}
-                    style={{ filter: 'drop-shadow(0 0 5px #E7A6F0)' }} />
-                )}
               </g>
             ))}
           </svg>
@@ -812,7 +809,6 @@ export default function Home() {
       <TestimonialDeck />
       <CentresArches />
       <Learn />
-      <CTABand />
     </>
   )
 }

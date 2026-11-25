@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, CalendarDays, Check, Clock, MapPin, Navigation, Phone } from 'lucide-react'
-import { CTABand, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { ArrowRight, CalendarDays, Check, Clock, MapPin, Phone } from 'lucide-react'
+import { CTABand, CurveHero, Reveal, SectionHeader, useMeta } from '../components/ui'
 import { centres, nextMonthly } from '../data/content'
 import { site } from '../data/site'
 import NotFound from './NotFound'
@@ -14,26 +14,10 @@ export function CentreDetail() {
   if (!c) return <NotFound />
   const next = c.monthly ? nextMonthly(c.monthly.nth, c.monthly.day, 3) : []
   const others = centres.filter((x) => x.slug !== c.slug)
-  const directions = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.map)}`
 
   return (
     <>
-      {/* Half-height hero: the centre photo fills the background under a dark overlay */}
-      <section className="relative isolate flex min-h-[30rem] items-end overflow-hidden bg-mist md:min-h-[34rem] lg:h-[62vh] lg:min-h-[36rem]">
-        <img src={c.image} alt={c.name} className="absolute inset-0 -z-20 h-full w-full object-cover" />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/85 via-plum-900/65 to-plum-900/35" />
-        <div className="container-x w-full pb-12 pt-28 md:pb-16 md:pt-36">
-          <Reveal>
-            <p className="eyebrow mb-5 !text-lilac">{c.kind}</p>
-            <h1 className="h1 max-w-3xl text-balance !text-paper">{c.name.replace(/ (Centre|OPD)$/, '')} <em className="text-lilac">{c.name.match(/(Centre|OPD)$/)?.[0] ?? ''}</em></h1>
-            <p className="lead mt-5 max-w-2xl text-pretty !text-paper/85">{c.summary}</p>
-            <div className="btn-pair mt-8">
-              <Link to="/book" className="btn-primary">Book at {c.city} <ArrowRight className="h-4 w-4" /></Link>
-              <a href={directions} target="_blank" rel="noreferrer" className="btn-secondary border-paper/40 bg-white/10 !text-paper backdrop-blur hover:bg-white/20"><Navigation className="h-4 w-4" /> Directions</a>
-            </div>
-          </Reveal>
-        </div>
-      </section>
+      <CurveHero image={c.image} alt={c.name} title={c.name} subtitle={c.summary} crumbs={[{ label: 'Centres' }, { label: c.name }]} />
 
       <section className="py-12 md:py-16">
         <div className="container-x grid gap-10 lg:grid-cols-2 lg:gap-16">

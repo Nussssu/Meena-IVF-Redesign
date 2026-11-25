@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
-import { ArrowRight, CalendarCheck, Check, Phone } from 'lucide-react'
-import { Accordion, CTABand, PageHero, RL, Reveal, SectionHeader, useMeta } from '../components/ui'
-import { DoctorCard, TreatmentCard } from '../components/cards'
+import { ArrowUpRight, CalendarCheck, Check, Phone } from 'lucide-react'
+import { Accordion, CTABand, CurveHero, PageHero, RL, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { TodayBadge, TreatmentCard } from '../components/cards'
 import { StepAnimation } from '../components/StepAnimation'
 import { byGroup, groups, treatmentBySlug } from '../data/treatments'
-import { doctors } from '../data/doctors'
+import { doctors, scheduleSummary } from '../data/doctors'
 import { team } from '../data/content'
 import { site } from '../data/site'
 import NotFound from './NotFound'
@@ -85,36 +85,7 @@ export function TreatmentDetail() {
 
   return (
     <>
-      {/* Half-height hero: a relatable photo fills the background under a dark overlay */}
-      <section className="relative isolate flex min-h-[30rem] items-end overflow-hidden bg-plum-900 md:min-h-[34rem] lg:min-h-[36rem]">
-        <img src={heroImage[t.slug] ?? t.image ?? '/img/consult.webp'} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
-        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/90 via-plum-900/70 to-plum-900/35" />
-        <div className="container-x grid w-full gap-10 pb-12 pt-28 md:pb-16 md:pt-36 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
-          <div>
-            <Reveal>
-              <p className="eyebrow mb-5 !text-lilac">{t.full}</p>
-              <h1 className="display !text-paper">{t.name}</h1>
-              <p className="lead mt-6 max-w-2xl text-pretty !text-paper/85">{t.short}</p>
-              <div className="btn-pair mt-8">
-                <Link to={`/book?treatment=${t.slug}`} className="btn-primary"><RL short="Book now" long="Book a consultation" /> <ArrowRight className="h-4 w-4" /></Link>
-                <a href={site.hotlineHref} className="btn-secondary border-paper/40 bg-white/10 !text-paper backdrop-blur hover:bg-white/20"><Phone className="h-4 w-4" /> <RL short="Call us" long={site.hotline} /></a>
-              </div>
-            </Reveal>
-          </div>
-          {t.facts && (
-            <Reveal delay={0.15}>
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-white/15 bg-white/15 backdrop-blur">
-                {t.facts.map((f, i) => (
-                  <div key={f.label} className={`bg-plum-900/55 p-5 ${t.facts!.length % 2 && i === t.facts!.length - 1 ? 'col-span-2' : ''}`}>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-paper/65">{f.label}</dt>
-                    <dd className="mt-1 font-display text-2xl text-paper">{f.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </Reveal>
-          )}
-        </div>
-      </section>
+      <CurveHero image={heroImage[t.slug] ?? t.image ?? '/img/consult.webp'} title={t.name} subtitle={t.short} crumbs={[{ label: 'Treatments', to: '/treatments' }, { label: t.name }]} />
 
       {/* In short + Who it can help, with the specialist card alongside */}
       <div className="container-x grid gap-14 pt-16 md:pt-24 lg:grid-cols-[1fr_340px]">
@@ -181,7 +152,7 @@ export function TreatmentDetail() {
           <div className="container-x">
             <SectionHeader eyebrow="Your specialists" title={`Consultants for ${t.name}`} />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-              {docs.map((d) => <Reveal key={d.slug}><DoctorCard d={d} /></Reveal>)}
+              {docs.map((d) => <Reveal key={d.slug}><SpecialistCard d={d} /></Reveal>)}
             </div>
           </div>
         </section>
@@ -203,5 +174,22 @@ export function TreatmentDetail() {
       )}
       <div className="pt-16 md:pt-24"><CTABand /></div>
     </>
+  )
+}
+
+/* Specialist card for treatment pages: one lavender backdrop for everyone, arch behind the photo, arrow button bottom-right */
+function SpecialistCard({ d }: { d: (typeof doctors)[number] }) {
+  return (
+    <article className="group">
+      <Link to={`/doctors/${d.slug}`} aria-label={`${d.name}, ${d.title}`} className="relative block aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-lilac">
+        <div aria-hidden className="arch-full absolute inset-x-[13%] bottom-0 top-[5%] bg-white/55" />
+        <img src={d.image} alt={d.name} loading="lazy" className="absolute inset-x-0 bottom-0 mx-auto h-[94%] w-auto object-contain object-bottom transition duration-700 ease-out group-hover:scale-[1.03]" />
+        <div className="absolute left-3 top-3"><TodayBadge doctor={d} /></div>
+        <span className="absolute bottom-4 right-4 grid h-11 w-11 place-items-center rounded-full bg-plum text-white shadow-soft transition group-hover:bg-plum-700"><ArrowUpRight className="h-5 w-5" /></span>
+      </Link>
+      <p className="mt-4 text-xs font-semibold text-plum">{d.title} · {d.experience}+ yrs</p>
+      <h3 className="mt-1.5 font-display text-[1.45rem] leading-tight"><Link to={`/doctors/${d.slug}`} className="hover:text-plum">{d.name}</Link></h3>
+      <p className="mt-2 text-sm text-muted">{scheduleSummary(d)}</p>
+    </article>
   )
 }
