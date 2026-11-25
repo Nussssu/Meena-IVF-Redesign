@@ -34,6 +34,8 @@ function Header() {
   const { scrollYProgress } = useScroll()
   const loc = useLocation()
   const closeTimer = useRef<number | undefined>(undefined)
+  // Centre and treatment pages open on a dark photo hero: keep the transparent header's text light until it gets its solid background
+  const onDark = /^\/(centres|treatments)\/[^/]+/.test(loc.pathname) && !(scrolled || open || mobile)
 
   useEffect(() => { setOpen(null); setMobile(false) }, [loc.pathname])
   useEffect(() => {
@@ -48,11 +50,11 @@ function Header() {
 
   return (
     <>
-    <header className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,border-color] duration-300 ease-out ${hide ? '-translate-y-full' : ''} ${scrolled || open || mobile ? 'border-b border-line/70 bg-paper/85 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'}`}>
+    <header className={`fixed inset-x-0 top-0 z-50 transition-[transform,background-color,border-color] duration-300 ease-out ${hide ? '-translate-y-full' : ''} ${scrolled || open || mobile ? 'border-b border-lilac bg-gradient-to-r from-white/90 via-white/90 to-lilac/90 backdrop-blur-xl' : 'border-b border-transparent bg-transparent'}`}>
       <motion.div aria-hidden style={{ scaleX: scrollYProgress }} className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-plum/70" />
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-plum focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
-        <Link to="/" aria-label="Meena IVF home" className="flex min-h-[2.75rem] shrink-0 items-center"><Logo className="h-7 md:h-8" /></Link>
+        <Link to="/" aria-label="Meena IVF home" className="flex min-h-[2.75rem] shrink-0 items-center"><Logo light={onDark} className="h-7 md:h-8" /></Link>
 
         <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-0.5 xl:gap-1">
@@ -62,7 +64,7 @@ function Header() {
                 <li key={item.label} className="relative" onMouseEnter={() => hasPanel && enter(item.label)} onMouseLeave={leave}>
                   {hasPanel ? (
                     <button
-                      className={`flex min-h-[2.75rem] items-center gap-1 rounded-full px-2.5 text-[0.9375rem] font-medium transition hover:text-plum xl:px-4 ${open === item.label ? 'text-plum' : 'text-ink'}`}
+                      className={`flex min-h-[2.75rem] items-center gap-1 rounded-full px-2.5 text-[0.9375rem] font-medium transition hover:text-plum xl:px-4 ${open === item.label ? 'text-plum' : onDark ? 'text-paper hover:!text-lilac' : 'text-ink'}`}
                       aria-expanded={open === item.label}
                       onClick={() => setOpen(open === item.label ? null : item.label)}
                     >
@@ -70,7 +72,7 @@ function Header() {
                       <ChevronDown className={`h-4 w-4 transition ${open === item.label ? 'rotate-180' : ''}`} />
                     </button>
                   ) : (
-                    <NavLink to={item.to} className={({ isActive }) => `flex min-h-[2.75rem] items-center rounded-full px-2.5 text-[0.9375rem] font-medium transition hover:text-plum xl:px-4 ${isActive ? 'text-plum' : 'text-ink'}`}>{item.label}</NavLink>
+                    <NavLink to={item.to} className={({ isActive }) => `flex min-h-[2.75rem] items-center rounded-full px-2.5 text-[0.9375rem] font-medium transition hover:text-plum xl:px-4 ${isActive ? 'text-plum' : onDark ? 'text-paper hover:!text-lilac' : 'text-ink'}`}>{item.label}</NavLink>
                   )}
                   <AnimatePresence>
                     {open === item.label && 'children' in item && (
@@ -94,7 +96,7 @@ function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <a href={site.hotlineHref} className="hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-semibold text-ink hover:text-plum 2xl:flex"><Phone className="h-4 w-4" />{site.hotline}</a>
+          <a href={site.hotlineHref} className={`hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-semibold ${onDark ? 'text-paper hover:text-lilac' : 'text-ink hover:text-plum'} 2xl:flex`}><Phone className="h-4 w-4" />{site.hotline}</a>
           <Link to="/book" className="btn-primary hidden !min-h-[44px] whitespace-nowrap !px-5 sm:inline-flex"><span>Book<span className="hidden xl:inline"> appointment</span></span></Link>
           <button ref={toggleRef} className="group grid h-11 w-11 place-items-center rounded-full bg-plum-900 text-paper shadow-soft transition hover:bg-plum lg:hidden" aria-label="Open menu" aria-expanded={mobile} aria-controls="mobile-drawer" onClick={() => setMobile(true)} data-mobile-toggle>
             <MenuIcon />
@@ -107,7 +109,7 @@ function Header() {
         {open === 'Treatments' && (
           <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.2 }}
             onMouseEnter={() => enter('Treatments')} onMouseLeave={leave}
-            className="absolute inset-x-0 top-full hidden border-b border-line bg-paper/95 backdrop-blur-xl lg:block">
+            className="absolute inset-x-0 top-full hidden border-b border-lilac bg-gradient-to-r from-white/95 via-white/95 to-lilac/95 backdrop-blur-xl lg:block">
             <div className="container-x grid grid-cols-[1fr_1fr_1fr_17.5rem] gap-x-8 gap-y-8 py-10 xl:gap-x-10">
               {groups.map((g) => (
                 <div key={g.key}>

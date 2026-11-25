@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ImageReveal } from '../components/motion'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowRight, CalendarCheck, Check, Phone } from 'lucide-react'
 import { Accordion, CTABand, PageHero, RL, Reveal, SectionHeader, useMeta } from '../components/ui'
 import { DoctorCard, TreatmentCard } from '../components/cards'
-import { byGroup, groups, treatmentBySlug, treatments } from '../data/treatments'
+import { StepAnimation } from '../components/StepAnimation'
+import { byGroup, groups, treatmentBySlug } from '../data/treatments'
 import { doctors } from '../data/doctors'
 import { team } from '../data/content'
 import { site } from '../data/site'
@@ -65,44 +65,49 @@ export function TreatmentsHub() {
   )
 }
 
+/** Hero photo per treatment, from the site's own image library */
+const heroImage: Record<string, string> = {
+  ivf: '/img/embryo-1.webp', icsi: '/img/semen-2.webp', iui: '/img/couple-doctor.webp',
+  'egg-freezing': '/img/egg-1.webp', 'semen-freezing': '/img/semen-3.webp', 'embryo-freezing': '/img/embryo-3.webp',
+  folliculometry: '/img/folliculometry.webp', tvs: '/img/egg-3.webp', 'ssg-sis': '/img/ssg.webp',
+  laparoscopy: '/img/laparoscopy.webp', hysteroscopy: '/img/embryo-4.webp', 'laparoscopic-myomectomy': '/img/journey-preparing.webp',
+  tesa: '/img/semen-1.webp', 'trial-tesa': '/img/semen-4.webp', pesa: '/img/embryo-2.webp',
+  'psychological-counseling': '/img/journey-conceive.webp', 'financial-counseling': '/img/consult.webp', 'medical-history-evaluation': '/img/egg-4.webp',
+}
+
 export function TreatmentDetail() {
   const { slug } = useParams()
   const t = treatmentBySlug(slug)
   useMeta(t ? `${t.name} (${t.full})` : 'Not found', t?.short)
   if (!t) return <NotFound />
-  const group = groups.find((g) => g.key === t.group)!
   const docs = doctors.filter((d) => d.treatments.includes(t.slug))
-  const related = treatments.filter((x) => x.group === t.group && x.slug !== t.slug)
   const supportTeam = t.group === 'support' ? team.find((x) => x.key === 'coordination')!.members : []
 
   return (
     <>
-      <section className="grain relative overflow-hidden bg-mist">
-        <div aria-hidden className="pointer-events-none absolute -right-40 top-0 h-[600px] w-[600px] rounded-full bg-[radial-gradient(closest-side,rgba(128,41,143,.10),transparent)]" />
-        <div className="container-x relative grid gap-10 pb-14 pt-32 md:pb-20 md:pt-40 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
+      {/* Half-height hero: a relatable photo fills the background under a dark overlay */}
+      <section className="relative isolate flex min-h-[30rem] items-end overflow-hidden bg-plum-900 md:min-h-[34rem] lg:min-h-[36rem]">
+        <img src={heroImage[t.slug] ?? t.image ?? '/img/consult.webp'} alt="" className="absolute inset-0 -z-20 h-full w-full object-cover" />
+        <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/90 via-plum-900/70 to-plum-900/35" />
+        <div className="container-x grid w-full gap-10 pb-12 pt-28 md:pb-16 md:pt-36 lg:grid-cols-[1.25fr_.75fr] lg:items-end">
           <div>
-            <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted">
-              <Link to="/" className="inline-flex min-h-[2.75rem] items-center hover:text-plum">Home</Link> <span className="mx-1.5 opacity-50">/</span>
-              <Link to="/treatments" className="inline-flex min-h-[2.75rem] items-center hover:text-plum">Treatments</Link> <span className="mx-1.5 opacity-50">/</span>
-              <Link to={`/treatments#${group.key}`} className="inline-flex min-h-[2.75rem] items-center hover:text-plum">{group.label}</Link>
-            </nav>
             <Reveal>
-              <p className="eyebrow mb-5">{t.full}</p>
-              <h1 className="display">{t.name}</h1>
-              <p className="lead mt-6 max-w-2xl text-pretty">{t.short}</p>
+              <p className="eyebrow mb-5 !text-lilac">{t.full}</p>
+              <h1 className="display !text-paper">{t.name}</h1>
+              <p className="lead mt-6 max-w-2xl text-pretty !text-paper/85">{t.short}</p>
               <div className="btn-pair mt-8">
                 <Link to={`/book?treatment=${t.slug}`} className="btn-primary"><RL short="Book now" long="Book a consultation" /> <ArrowRight className="h-4 w-4" /></Link>
-                <a href={site.hotlineHref} className="btn-secondary"><Phone className="h-4 w-4" /> <RL short="Call us" long={site.hotline} /></a>
+                <a href={site.hotlineHref} className="btn-secondary border-paper/40 bg-white/10 !text-paper backdrop-blur hover:bg-white/20"><Phone className="h-4 w-4" /> <RL short="Call us" long={site.hotline} /></a>
               </div>
             </Reveal>
           </div>
           {t.facts && (
             <Reveal delay={0.15}>
-              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-line bg-line">
+              <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-card border border-white/15 bg-white/15 backdrop-blur">
                 {t.facts.map((f, i) => (
-                  <div key={f.label} className={`bg-white p-5 ${t.facts!.length % 2 && i === t.facts!.length - 1 ? 'col-span-2' : ''}`}>
-                    <dt className="text-xs font-semibold uppercase tracking-wider text-muted">{f.label}</dt>
-                    <dd className="mt-1 font-display text-2xl text-ink">{f.value}</dd>
+                  <div key={f.label} className={`bg-plum-900/55 p-5 ${t.facts!.length % 2 && i === t.facts!.length - 1 ? 'col-span-2' : ''}`}>
+                    <dt className="text-xs font-semibold uppercase tracking-wider text-paper/65">{f.label}</dt>
+                    <dd className="mt-1 font-display text-2xl text-paper">{f.value}</dd>
                   </div>
                 ))}
               </dl>
@@ -111,7 +116,8 @@ export function TreatmentDetail() {
         </div>
       </section>
 
-      <div className="container-x grid gap-14 py-16 md:py-24 lg:grid-cols-[1fr_340px]">
+      {/* In short + Who it can help, with the specialist card alongside */}
+      <div className="container-x grid gap-14 pt-16 md:pt-24 lg:grid-cols-[1fr_340px]">
         <article className="min-w-0">
           <Reveal id="in-short" className="">
             <p className="eyebrow mb-4">In short</p>
@@ -119,8 +125,6 @@ export function TreatmentDetail() {
               {t.intro.map((p, i) => <p key={i} className={i === 0 ? 'font-display text-[1.45rem] leading-snug text-ink' : ''}>{p}</p>)}
             </div>
           </Reveal>
-
-          {t.image && <ImageReveal src={t.image} className="mt-12 aspect-[16/9] rounded-panel" />}
 
           <Reveal id="who" className="mt-16">
             <h2 className="h3 md:text-[2rem]">Who it can help</h2>
@@ -133,21 +137,28 @@ export function TreatmentDetail() {
               ))}
             </ul>
           </Reveal>
+        </article>
 
-          <Reveal id="how" className="mt-16">
-            <h2 className="h3 md:text-[2rem]">How it works</h2>
-            <ol className="relative mt-8 space-y-0 border-l border-line pl-8">
-              {t.steps.map((s, i) => (
-                <li key={s.title} className="relative pb-9 last:pb-0">
-                  <span className="absolute -left-[49px] grid h-8 w-8 place-items-center rounded-full border border-plum bg-paper font-display text-sm text-plum">{i + 1}</span>
-                  <h3 className="font-sans text-lg font-semibold tracking-normal">{s.title}</h3>
-                  <p className="mt-1.5 text-ink-2">{s.text}</p>
-                </li>
-              ))}
-            </ol>
-          </Reveal>
+        <aside className="lg:sticky lg:top-28 lg:self-start">
+          <div className="card p-6 shadow-soft">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-lilac text-plum"><CalendarCheck className="h-5 w-5" /></span>
+            <p className="mt-5 font-display text-2xl leading-tight">Talk to a specialist about {t.name}.</p>
+            <p className="mt-2 text-sm text-muted">We will review your history and explain whether {t.name} is right for you.</p>
+            <div className="btn-pair mt-6 sm:!grid sm:grid-cols-1 sm:!gap-2">
+              <Link to={`/book?treatment=${t.slug}`} className="btn-primary sm:!w-full">Book<span className="hidden sm:inline">&nbsp;appointment</span></Link>
+              <a href={site.hotlineHref} className="btn-secondary sm:!w-full"><Phone className="h-4 w-4" /> <RL short="Call" long={site.hotline} /></a>
+            </div>
+          </div>
+        </aside>
+      </div>
 
-          <Reveal id="benefits" className="mt-16">
+      <section id="how" className="mt-16">
+        <StepAnimation slug={t.slug} steps={t.steps} />
+      </section>
+
+      <div className="container-x grid gap-14 pb-16 pt-16 md:pb-24 lg:grid-cols-[1fr_340px]">
+        <article className="min-w-0">
+          <Reveal id="benefits">
             <div className="rounded-panel bg-plum-900 p-8 text-paper md:p-10">
               <h2 className="font-display text-2xl !text-paper md:text-3xl">Benefits</h2>
               <ul className="mt-6 grid gap-4 sm:grid-cols-2">
@@ -163,32 +174,6 @@ export function TreatmentDetail() {
             </Reveal>
           )}
         </article>
-
-        <aside className="lg:sticky lg:top-28 lg:self-start">
-          <SectionIndex items={[['in-short', 'In short'], ['who', 'Who it helps'], ['how', 'How it works'], ['benefits', 'Benefits'], ...(t.faqs ? [['faq', 'Questions'] as [string, string]] : [])]} />
-          <div className="card p-6 shadow-soft">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-lilac text-plum"><CalendarCheck className="h-5 w-5" /></span>
-            <p className="mt-5 font-display text-2xl leading-tight">Talk to a specialist about {t.name}.</p>
-            <p className="mt-2 text-sm text-muted">We will review your history and explain whether {t.name} is right for you.</p>
-            <div className="btn-pair mt-6 sm:!grid sm:grid-cols-1 sm:!gap-2">
-              <Link to={`/book?treatment=${t.slug}`} className="btn-primary sm:!w-full">Book<span className="hidden sm:inline">&nbsp;appointment</span></Link>
-              <a href={site.hotlineHref} className="btn-secondary sm:!w-full"><Phone className="h-4 w-4" /> <RL short="Call" long={site.hotline} /></a>
-            </div>
-          </div>
-          {related.length > 0 && (
-            <div className="mt-6">
-              <p className="mb-3 text-eyebrow font-semibold uppercase text-muted">Also in {group.label.toLowerCase()}</p>
-              <ul className="space-y-2">
-                {related.map((r) => (
-                  <li key={r.slug}><Link to={`/treatments/${r.slug}`} className="group flex items-center justify-between rounded-xl border border-line bg-white px-4 py-3 transition hover:border-plum">
-                    <span><span className="block font-semibold group-hover:text-plum">{r.name}</span><span className="text-xs text-muted">{r.full}</span></span>
-                    <ArrowRight className="h-4 w-4 text-muted transition group-hover:translate-x-0.5 group-hover:text-plum" />
-                  </Link></li>
-                ))}
-              </ul>
-            </div>
-          )}
-        </aside>
       </div>
 
       {docs.length > 0 && (
@@ -218,30 +203,5 @@ export function TreatmentDetail() {
       )}
       <div className="pt-16 md:pt-24"><CTABand /></div>
     </>
-  )
-}
-
-function SectionIndex({ items }: { items: [string, string][] }) {
-  const [active, setActive] = useState(items[0][0])
-  useEffect(() => {
-    const obs = new IntersectionObserver((es) => es.forEach((e) => e.isIntersecting && setActive(e.target.id)), { rootMargin: '-35% 0px -60% 0px' })
-    items.forEach(([id]) => { const el = document.getElementById(id); if (el) obs.observe(el) })
-    return () => obs.disconnect()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.map((i) => i[0]).join()])
-  return (
-    <nav aria-label="On this page" className="mb-6 hidden lg:block">
-      <p className="mb-3 text-eyebrow font-semibold uppercase text-muted">On this page</p>
-      <ol className="relative border-l border-line">
-        {items.map(([id, label], i) => (
-          <li key={id}>
-            <a href={`#${id}`} onClick={(e) => { e.preventDefault(); scrollToTarget(id, { offset: -100 }) }} aria-current={active === id ? 'location' : undefined}
-              className={`-ml-px flex min-h-[2.75rem] items-center gap-3 border-l-2 pl-4 text-sm transition duration-200 ${active === id ? 'border-plum font-semibold text-plum' : 'border-transparent text-ink-2 hover:text-plum'}`}>
-              <span className="font-display text-xs text-muted">0{i + 1}</span>{label}
-            </a>
-          </li>
-        ))}
-      </ol>
-    </nav>
   )
 }

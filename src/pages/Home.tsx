@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
-import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, GraduationCap, Heart, MapPin, Microscope, Pause, Play, ShieldCheck, Snowflake, Sprout, Stethoscope } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, GraduationCap, Heart, MapPin, Microscope, Pause, Play, ShieldCheck, Stethoscope } from 'lucide-react'
 import { CTABand, RL, Reveal, SectionHeader, WhatsAppIcon, useMeta } from '../components/ui'
 import { DoctorCard, TodayBadge } from '../components/cards'
 import { Magnetic, ScrollRibbon } from '../components/motion'
@@ -80,13 +80,27 @@ function Hero() {
 /* ───────────────── 2. Arch window + manifesto ───────────────── */
 const MANIFESTO = 'Every family begins with hope. We bring the science, the specialists and the patience to carry it, one gentle step at a time, until the day you hold your baby.'
 
+/* "M" outline (0–1 inside its box) and where each point ends up when the window fills the screen */
+const M_SHAPE: [number, number][] = [[0, 1], [0, 0], [0.24, 0], [0.5, 0.42], [0.76, 0], [1, 0], [1, 1], [0.78, 1], [0.78, 0.4], [0.5, 0.84], [0.22, 0.4], [0.22, 1]]
+const M_FULL: [number, number][] = [[0, 1], [0, 0], [0.24, 0], [0.5, 0], [0.76, 0], [1, 0], [1, 1], [0.78, 1], [0.78, 1], [0.5, 1], [0.22, 1], [0.22, 1]]
+
 function ArchManifesto() {
   const reduce = useReducedMotion()
   const desktop = useMedia('(min-width: 768px)')
   const ref = useRef<HTMLElement>(null)
   const { scrollYProgress: p } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  const side = desktop ? '31%' : '14%'
-  const clip = useTransform(p, [0, 0.42], [`inset(12% ${side} 10% ${side} round 999px 999px 28px 28px)`, 'inset(0% 0% 0% 0% round 0px 0px 0px 0px)'])
+  // The photo starts as a large "M" and opens out to the full screen as you scroll
+  const box = desktop ? { l: 29, r: 71, t: 14, b: 88 } : { l: 8, r: 92, t: 24, b: 72 }
+  const clip = useTransform(p, (v) => {
+    const k = Math.min(Math.max(v / 0.42, 0), 1)
+    const e = 1 - Math.pow(1 - k, 3) // ease-out
+    const pts = M_SHAPE.map(([u0, v0], i) => {
+      const x0 = box.l + (box.r - box.l) * u0, y0 = box.t + (box.b - box.t) * v0 // inside the M box
+      const x1 = M_FULL[i][0] * 100, y1 = M_FULL[i][1] * 100 // on the screen edge
+      return `${(x0 + (x1 - x0) * e).toFixed(2)}% ${(y0 + (y1 - y0) * e).toFixed(2)}%`
+    })
+    return `polygon(${pts.join(', ')})`
+  })
   const scale = useTransform(p, [0, 0.42], [1.25, 1])
   const veil = useTransform(p, [0.3, 0.5], [0, 0.66])
   const caption = useTransform(p, [0, 0.18], [1, 0])
@@ -129,58 +143,36 @@ function ManifestoWord({ p, i, n, children }: { p: MotionValue<number>; i: numbe
 
 /* ───────────────── 3. Journey selector ───────────────── */
 function JourneySelector() {
-  const [active, setActive] = useState(0)
-  // Auto-advance through the options in a loop
-  useEffect(() => {
-    const t = window.setTimeout(() => setActive((a) => (a + 1) % journeys.length), 5000)
-    return () => window.clearTimeout(t)
-  }, [active])
-  const onKey = (e: React.KeyboardEvent) => {
-    const cols = 2
-    const map: Record<string, number> = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: cols, ArrowUp: -cols }
-    const move = map[e.key]
-    if (!move) return
-    e.preventDefault()
-    const next = (active + move + journeys.length) % journeys.length
-    setActive(next)
-    document.getElementById(`tab-${journeys[next].key}`)?.focus()
-  }
-  // Card copy, icons and the staggered (up/down) offsets from the design
-  const CARD: Record<string, { label: string; Icon: typeof Sprout; offset: string }> = {
-    conceive: { label: 'Trying to conceive', Icon: Sprout, offset: 'lg:mt-20' },
-    miscarriage: { label: 'Miscarriage support', Icon: Heart, offset: 'lg:mt-0' },
-    preparing: { label: 'Preparing for treatment', Icon: Stethoscope, offset: 'lg:mt-24' },
-    freezing: { label: 'Egg freezing', Icon: Snowflake, offset: 'lg:mt-0' },
+  // Card copy and where each card leads (image, title, short line, text link)
+  const CARD: Record<string, { label: string; desc: string; to: string; img: string; pos: string }> = {
+    conceive: { label: 'Trying to conceive', desc: 'Start with a careful evaluation of both partners.', to: '/treatments/medical-history-evaluation', img: '/img/embryo-2.webp', pos: 'object-[50%_50%]' },
+    miscarriage: { label: 'Miscarriage support', desc: 'Gentle care to find the cause and try again.', to: '/treatments/hysteroscopy', img: '/img/journey-conceive.webp', pos: 'object-[45%_50%]' },
+    preparing: { label: 'Preparing for treatment', desc: 'Clear steps, clear costs and a consultant by your side.', to: '/treatments/ivf', img: '/img/journey-miscarriage.webp', pos: 'object-[60%_50%]' },
+    freezing: { label: 'Egg freezing', desc: 'Preserve your eggs today, on your own timeline.', to: '/treatments/egg-freezing', img: '/img/egg-2.webp', pos: 'object-[50%_50%]' },
   }
   return (
     <section className="section">
       <div className="container-x">
-        <Reveal className="mb-10 md:mb-14">
+        <Reveal className="mb-10 text-center md:mb-14">
           <h2 className="h2">Your fertility <em className="text-plum">journey</em></h2>
         </Reveal>
-        <div role="tablist" aria-label="Your situation" aria-orientation="horizontal" onKeyDown={onKey} className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4 lg:items-start lg:gap-6">
+        <ul className="grid grid-cols-1 gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
           {journeys.map((x, i) => {
-            const on = active === i
-            const c = CARD[x.key] ?? { label: x.label, Icon: Heart, offset: '' }
+            const c = CARD[x.key] ?? { label: x.label, desc: x.title, to: '/treatments', img: x.image, pos: '' }
             return (
-              <button key={x.key} role="tab" id={`tab-${x.key}`} aria-selected={on} tabIndex={on ? 0 : -1}
-                onClick={() => setActive(i)}
-                className={`group relative overflow-hidden rounded-[1.75rem] border-2 border-white bg-gradient-to-b from-[#FBF6F3] to-[#F2E8E5] text-left outline-offset-4 transition duration-500 ease-out ${c.offset} ${on ? '-translate-y-1.5 shadow-[0_30px_60px_-28px_rgba(46,13,54,.45)]' : 'shadow-[0_24px_48px_-28px_rgba(46,13,54,.32)] hover:-translate-y-1'}`}>
-                <div className="relative aspect-[6/5] overflow-hidden">
-                  <img src={x.key === 'conceive' ? '/img/journey-conceive.webp' : x.image} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-105" />
-                  {/* Soft wave that blends the photo into the card */}
-                  <svg aria-hidden viewBox="0 0 400 60" preserveAspectRatio="none" className="absolute inset-x-0 -bottom-px h-14 w-full">
-                    <path d="M0,38 C70,0 150,8 220,30 C290,52 350,40 400,22 L400,60 L0,60 Z" fill="#FBF6F3" />
-                  </svg>
-                </div>
-                <div className="flex items-center gap-3 px-5 pb-6 pt-1">
-                  <c.Icon className="h-7 w-7 shrink-0 text-plum-900" strokeWidth={1.5} />
-                  <p className="font-display text-lg leading-snug text-ink">{x.label}?</p>
-                </div>
-              </button>
+              <Reveal as="li" key={x.key} delay={i * 0.06} className="h-full">
+                <Link to={c.to} className="group flex h-full flex-col">
+                  <div className="relative aspect-[9/10] overflow-hidden rounded-md bg-mist">
+                    <img src={c.img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full object-cover ${c.pos} transition duration-700 group-hover:scale-[1.03]`} />
+                  </div>
+                  <h3 className="mt-6 font-sans text-xl font-semibold leading-snug tracking-[0.01em] text-ink transition-colors group-hover:text-plum md:text-2xl">{c.label}</h3>
+                  <p className="mt-2 text-base font-light leading-relaxed text-ink-2 md:text-lg">{c.desc}</p>
+                  <span className="mt-auto pt-6 text-[0.9375rem] font-semibold uppercase text-ink underline decoration-[1.5px] underline-offset-[5px] transition-colors group-hover:text-plum md:text-base">Explore care</span>
+                </Link>
+              </Reveal>
             )
           })}
-        </div>
+        </ul>
       </div>
     </section>
   )

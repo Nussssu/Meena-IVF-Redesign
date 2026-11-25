@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom'
 import { ArrowRight, CalendarDays, Check, Clock, MapPin, Navigation, Phone } from 'lucide-react'
-import { Breadcrumbs, CTABand, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { CTABand, Reveal, SectionHeader, useMeta } from '../components/ui'
 import { centres, nextMonthly } from '../data/content'
 import { site } from '../data/site'
 import NotFound from './NotFound'
@@ -23,7 +23,6 @@ export function CentreDetail() {
         <img src={c.image} alt={c.name} className="absolute inset-0 -z-20 h-full w-full object-cover" />
         <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/85 via-plum-900/65 to-plum-900/35" />
         <div className="container-x w-full pb-12 pt-28 md:pb-16 md:pt-36">
-          <div className="[&_*]:!text-paper/80"><Breadcrumbs items={[{ label: 'Centres' }, { label: c.name }]} /></div>
           <Reveal>
             <p className="eyebrow mb-5 !text-lilac">{c.kind}</p>
             <h1 className="h1 max-w-3xl text-balance !text-paper">{c.name.replace(/ (Centre|OPD)$/, '')} <em className="text-lilac">{c.name.match(/(Centre|OPD)$/)?.[0] ?? ''}</em></h1>
@@ -36,7 +35,7 @@ export function CentreDetail() {
         </div>
       </section>
 
-      <section className="section">
+      <section className="py-12 md:py-16">
         <div className="container-x grid gap-10 lg:grid-cols-2 lg:gap-16">
           <Reveal>
             <SectionHeader eyebrow="Visit us" title="Where and when" />
@@ -57,22 +56,45 @@ export function CentreDetail() {
         </div>
       </section>
 
-      <section className="section bg-mist pt-0 md:pt-0 lg:pt-0">
+      <section className="bg-mist py-12 md:py-16">
+        {c.slug === 'banani' ? (
+        /* Banani keeps the original card grid */
         <div className="container-x">
-          <SectionHeader eyebrow="What you can do here" title={<>Care available at <em className="text-plum">{c.city}</em></>} text={`Best for: ${c.bestFor}.`} />
+          <SectionHeader title={<>Care available at <em className="text-plum">{c.city}</em></>} text={`Best for: ${c.bestFor}.`} />
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {c.services.map((sv, i) => (
-              <Reveal as="li" key={sv} delay={(i % 4) * 0.05} className="card flex items-center gap-3 p-5">
-                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lilac text-plum"><Check className="h-4 w-4" /></span>
-                <span className="font-medium">{sv}</span>
+              <Reveal as="li" key={sv} delay={(i % 4) * 0.05} className="group card flex cursor-default items-center gap-3 p-5 transition duration-300 hover:border-plum/40 hover:shadow-lift">
+                <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lilac text-plum transition duration-300 group-hover:bg-plum group-hover:text-white"><Check className="h-4 w-4" /></span>
+                <span className="font-medium transition duration-300 group-hover:text-plum">{sv}</span>
               </Reveal>
             ))}
           </ul>
         </div>
+        ) : (
+        <div className="container-x grid items-center gap-10 lg:grid-cols-[1fr_1.35fr] lg:gap-16">
+          {/* Left: heading */}
+          <Reveal>
+            <h2 className="h2 max-w-md text-balance">Care available at <em className="text-plum">{c.city}</em></h2>
+            <p className="mt-4 text-pretty text-lg leading-relaxed text-ink-2">Best for: {c.bestFor}.</p>
+          </Reveal>
+          {/* Right: numbered list of services in one card */}
+          <Reveal delay={0.1} className="card rounded-panel px-5 py-1 md:px-10 md:py-2">
+            <ul className="divide-y divide-line">
+              {c.services.map((sv, i) => (
+                <li key={sv} className="group flex cursor-default items-center gap-5 py-4 md:gap-8 md:py-6">
+                  <span className="w-6 shrink-0 font-display text-sm text-plum/50 transition duration-300 group-hover:text-plum">{String(i + 1).padStart(2, '0')}</span>
+                  <span className="min-w-0 flex-1 font-display text-xl leading-snug text-ink transition duration-300 group-hover:text-plum md:text-[1.75rem]">{sv}</span>
+                  <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-lilac text-plum transition duration-300 group-hover:bg-plum group-hover:text-white"><Check className="h-4 w-4" /></span>
+                </li>
+              ))}
+            </ul>
+          </Reveal>
+        </div>
+        )}
       </section>
 
       {c.gallery && (
-        <section className="section pt-0 md:pt-0 lg:pt-0">
+        <section className="py-12 md:py-16">
           <div className="container-x">
             <SectionHeader eyebrow="Inside the centre" title={<>Take a look <em className="text-plum">around</em></>} />
             <div className="grid gap-4 sm:grid-cols-3">
@@ -86,7 +108,7 @@ export function CentreDetail() {
         </section>
       )}
 
-      <section className="section bg-mist pt-0 md:pt-0 lg:pt-0">
+      <section className={`bg-mist py-12 md:py-16 ${c.gallery ? '' : 'pt-0 md:pt-0 lg:pt-0'}`}>
         <div className="container-x">
           <SectionHeader eyebrow="Other centres" title="Closer to you, wherever you are." />
           <div className="grid gap-5 md:grid-cols-2">
