@@ -58,8 +58,8 @@ export function ImageReveal({ src, alt = '', className = '', imgClassName = '' }
   )
 }
 
-/** A ribbon of large words that slides only while the visitor scrolls (no idle looping). */
-export function ScrollRibbon({ words, reverse = false, className = '' }: { words: string[]; reverse?: boolean; className?: string }) {
+/** A ribbon of large words that slides while the visitor scrolls, or (with `auto`) keeps looping on its own. */
+export function ScrollRibbon({ words, reverse = false, auto = false, className = '' }: { words: string[]; reverse?: boolean; auto?: boolean; className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
   const reduce = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
@@ -67,7 +67,10 @@ export function ScrollRibbon({ words, reverse = false, className = '' }: { words
   const row = [...words, ...words, ...words]
   return (
     <div ref={ref} className={`overflow-hidden ${className}`} aria-hidden>
-      <motion.div style={{ x: reduce ? 0 : x }} className="flex w-max items-center gap-8 whitespace-nowrap md:gap-12">
+      <motion.div style={auto ? undefined : { x: reduce ? 0 : x }}
+        animate={auto && !reduce ? { x: reverse ? ['-33.333%', '0%'] : ['0%', '-33.333%'] } : undefined}
+        transition={auto ? { duration: 40, ease: 'linear', repeat: Infinity } : undefined}
+        className={`flex w-max items-center gap-8 whitespace-nowrap md:gap-12 ${auto ? "pr-8 md:pr-12" : ""}`}>
         {row.map((w, i) => (
           <span key={i} className="flex items-center gap-8 md:gap-12">
             <span className={i % 2 ? 'text-transparent [-webkit-text-stroke:1px_#80298F]' : 'italic text-plum'}>{w}</span>

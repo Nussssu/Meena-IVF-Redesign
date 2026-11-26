@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion, useScroll, useTransform, animate } from 'motion/react'
-import { ArrowRight, ChevronDown, ChevronRight, Phone } from 'lucide-react'
-import { site, waLink } from '../data/site'
+import { ArrowRight, ChevronDown, ChevronRight, Mail } from 'lucide-react'
+import { MOTHER_BABY } from './motherBaby'
 
 /** Short label on phones, full label from 640px. */
 export function RL({ short, long }: { short: string; long: string }) {
@@ -50,12 +50,26 @@ export function Logo({ light = false, className = 'h-8' }: { light?: boolean; cl
   return <img src={light ? '/img/logo-white.webp' : '/img/logo-color.webp'} alt="Meena IVF" className={`${className} w-auto`} width={900} height={146} />
 }
 
+/** Section-title style used site-wide (as in "Wherever you are, there's a next step."): the closing word(s) of a plain
+    text title are set in italic plum (light lilac on dark backgrounds), trailing punctuation stays in the main colour. */
+export function TwoTone({ text, light = false }: { text: string; light?: boolean }) {
+  const m = text.match(/^(.*?)([.?!:,]*)$/)
+  const core = m ? m[1] : text
+  const punct = m ? m[2] : ''
+  const words = core.split(' ')
+  const k = words.length > 2 && words[words.length - 1].length < 4 ? 2 : 1
+  const head = words.slice(0, -k).join(' ')
+  const tail = words.slice(-k).join(' ')
+  if (!head) return <>{text}</>
+  return <>{head} <em className={light ? 'text-[#E7A6F0]' : 'text-plum'}>{tail}</em>{punct}</>
+}
+
 export function SectionHeader({ eyebrow, title, text, align = 'left', action, light = false }: { eyebrow?: string; title: ReactNode; text?: ReactNode; align?: 'left' | 'center'; action?: ReactNode; light?: boolean }) {
   return (
     <div className={`mb-10 flex flex-col gap-6 md:mb-14 ${align === 'center' ? 'items-center text-center' : 'md:flex-row md:items-end md:justify-between'}`}>
       <Reveal className={align === 'center' ? 'max-w-2xl' : 'max-w-2xl'}>
         {eyebrow && <p className={`eyebrow mb-4 ${light ? '!text-lilac' : ''}`}>{eyebrow}</p>}
-        <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>{title}</h2>
+        <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>{typeof title === 'string' ? <TwoTone text={title} light={light} /> : title}</h2>
         {text && <p className={`mt-4 text-pretty text-lg leading-relaxed ${light ? 'text-paper/75' : 'text-ink-2'}`}>{text}</p>}
       </Reveal>
       {action && <Reveal delay={0.1} className="shrink-0">{action}</Reveal>}
@@ -80,17 +94,22 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
 }
 
 /* Photo hero with a strong colour wash on the left, title + tagline, breadcrumb trail, and a curved bottom edge */
-export function CurveHero({ image, alt = '', title, subtitle, crumbs }: { image: string; alt?: string; title: ReactNode; subtitle?: ReactNode; crumbs: { label: string; to?: string }[] }) {
+export function CurveHero({ image, video, alt = '', eyebrow, title, subtitle, crumbs, children }: { image: string; video?: string; alt?: string; eyebrow?: string; title: ReactNode; subtitle?: ReactNode; crumbs?: { label: string; to?: string }[]; children?: ReactNode }) {
   return (
     <section className="relative isolate overflow-hidden bg-plum-900">
-      <img src={image} alt={alt} className="absolute inset-0 -z-20 h-full w-full object-cover" />
+      {/* a video (when given) plays in place of the photo; the photo is its poster */}
+      {video
+        ? <video src={video} poster={image} autoPlay muted loop playsInline preload="metadata" aria-label={alt || undefined} className="absolute inset-0 -z-20 h-full w-full object-cover" />
+        : <img src={image} alt={alt} className="absolute inset-0 -z-20 h-full w-full object-cover" />}
       <div aria-hidden className="absolute inset-0 -z-10 bg-gradient-to-r from-plum-900/95 via-plum-900/75 to-plum-900/10" />
       <div className="container-x grid min-h-[24rem] items-center gap-6 pb-20 pt-32 md:min-h-[28rem] md:pb-28 md:pt-36 lg:min-h-[30rem] lg:grid-cols-[1fr_auto] lg:gap-12">
         <Reveal>
+          {eyebrow && <p className="eyebrow mb-4 !text-lilac">{eyebrow}</p>}
           <h1 className="display max-w-3xl text-balance !text-paper">{title}</h1>
           {subtitle && <p className="mt-5 max-w-xl text-pretty text-lg leading-relaxed text-paper/90 md:text-xl">{subtitle}</p>}
+          {children && <div className="btn-pair mt-8">{children}</div>}
         </Reveal>
-        <Reveal delay={0.1}>
+        {crumbs && <Reveal delay={0.1}>
           <nav aria-label="Breadcrumb" className="text-sm text-paper/85">
             <ol className="flex flex-wrap items-center gap-x-1.5">
               <li><Link to="/" className="inline-flex min-h-[2.75rem] items-center hover:text-white">Home</Link></li>
@@ -102,7 +121,7 @@ export function CurveHero({ image, alt = '', title, subtitle, crumbs }: { image:
               ))}
             </ol>
           </nav>
-        </Reveal>
+        </Reveal>}
       </div>
       {/* curved bottom edge, in the page background colour */}
       <svg aria-hidden viewBox="0 0 1440 80" preserveAspectRatio="none" className="absolute inset-x-0 bottom-[-1px] h-10 w-full md:h-16 lg:h-20">
@@ -147,21 +166,23 @@ function HeroArch({ src }: { src: string }) {
   )
 }
 
-export function CTABand({ title = 'Your next step can be a gentle one.', text = 'Talk to our fertility team today. We will listen, explain your options clearly and help you choose the right specialist and centre.' }: { title?: string; text?: string }) {
+/* Minimal closing CTA: one heading, Book appointment + Contact, and the footer's mother-and-baby shape scaled to the panel.
+   `text` is still accepted so existing callers keep compiling, but it is no longer shown. */
+export function CTABand({ title = 'Your next step can be a gentle one.' }: { title?: string; text?: string }) {
   return (
     <section className="container-x pb-20 md:pb-28">
       <Reveal>
-        <div className="relative overflow-hidden rounded-panel bg-plum-900 px-6 py-14 text-paper md:px-16 md:py-20">
-          <div aria-hidden className="absolute -bottom-1/2 right-[-10%] h-[140%] w-[60%] rounded-t-full bg-plum/40" />
-          <div aria-hidden className="absolute -bottom-1/2 right-[12%] h-[110%] w-[38%] rounded-t-full bg-lavender/25" />
+        <div className="relative overflow-hidden rounded-panel bg-gradient-to-br from-plum-800 via-plum-900 to-plum-900 px-6 py-10 text-paper md:px-14 md:py-12">
+          {/* soft glow + the mother-and-baby shape fill the right side so the band doesn't feel empty */}
+          <div aria-hidden className="absolute -right-24 top-1/2 h-[140%] w-[45%] -translate-y-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(178,95,191,.35),transparent)]" />
+          <svg aria-hidden viewBox="0 0 320 475" className="absolute bottom-0 right-4 aspect-[320/475] h-[96%] w-auto md:right-[8%]">
+            <g fill="#B25FBF" opacity=".28">{MOTHER_BABY.map((d, i) => <path key={i} d={d} />)}</g>
+          </svg>
           <div className="relative max-w-2xl">
-            <p className="eyebrow mb-5 !text-lilac">Book a consultation</p>
-            <h2 className="h2 text-balance !text-paper">{title}</h2>
-            <p className="mt-5 text-lg leading-relaxed text-paper/75">{text}</p>
-            <div className="btn-trio mt-9">
+            <h2 className="h2 text-balance !text-paper"><TwoTone text={title} light /></h2>
+            <div className="btn-pair mt-7">
               <Link to="/book" className="btn-light">Book appointment <ArrowRight className="h-4 w-4" /></Link>
-              <a href={site.hotlineHref} className="btn-ghost-light"><Phone className="h-4 w-4" /> <RL short="Call" long={site.hotline} /></a>
-              <a href={waLink()} target="_blank" rel="noreferrer" className="btn-ghost-light"><WhatsAppIcon className="h-[1.125rem] w-[1.125rem] text-whatsapp" /> WhatsApp</a>
+              <Link to="/contact" className="btn-ghost-light"><Mail className="h-4 w-4" /> Contact us</Link>
             </div>
           </div>
         </div>

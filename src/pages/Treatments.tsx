@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowUpRight, CalendarCheck, Check, Phone } from 'lucide-react'
-import { Accordion, CTABand, CurveHero, PageHero, RL, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { Accordion, CTABand, CurveHero, PageHero, RL, Reveal, SectionHeader, TwoTone, useMeta } from '../components/ui'
 import { TodayBadge, TreatmentCard } from '../components/cards'
 import { StepAnimation } from '../components/StepAnimation'
 import { byGroup, groups, treatmentBySlug } from '../data/treatments'
@@ -50,7 +50,7 @@ export function TreatmentsHub() {
               <Reveal>
                 <p className="font-display text-sm text-muted">0{gi + 1} / 06</p>
                 <p className="eyebrow mt-3">{g.label}</p>
-                <h2 className="h3 mt-3 text-balance md:text-[2rem]">{g.title}</h2>
+                <h2 className="h2 mt-3 text-balance"><TwoTone text={g.title} /></h2>
                 <p className="mt-3 text-ink-2">{g.blurb}</p>
               </Reveal>
               <div className="grid gap-4 md:grid-cols-3">
@@ -75,6 +75,16 @@ const heroImage: Record<string, string> = {
   'psychological-counseling': '/img/journey-conceive.webp', 'financial-counseling': '/img/consult.webp', 'medical-history-evaluation': '/img/egg-4.webp',
 }
 
+/** Warm, relatable photo beside the benefits list on each treatment page */
+const benefitImage: Record<string, string> = {
+  ivf: '/img/hero-family.webp', icsi: '/img/hero-video-poster.webp', iui: '/img/journey-miscarriage.webp',
+  'egg-freezing': '/img/egg-2.webp', 'semen-freezing': '/img/journey-freezing.webp', 'embryo-freezing': '/img/hero-video-poster.webp',
+  folliculometry: '/img/tvs.webp', tvs: '/img/couple-doctor.webp', 'ssg-sis': '/img/consult.webp',
+  laparoscopy: '/img/patient-care.webp', hysteroscopy: '/img/patient-care.webp', 'laparoscopic-myomectomy': '/img/hero-family.webp',
+  tesa: '/img/couple-doctor.webp', 'trial-tesa': '/img/consult.webp', pesa: '/img/journey-miscarriage.webp',
+  'psychological-counseling': '/img/journey-miscarriage.webp', 'financial-counseling': '/img/couple-doctor.webp', 'medical-history-evaluation': '/img/consult.webp',
+}
+
 export function TreatmentDetail() {
   const { slug } = useParams()
   const t = treatmentBySlug(slug)
@@ -85,7 +95,7 @@ export function TreatmentDetail() {
 
   return (
     <>
-      <CurveHero image={heroImage[t.slug] ?? t.image ?? '/img/consult.webp'} title={t.name} subtitle={t.short} crumbs={[{ label: 'Treatments', to: '/treatments' }, { label: t.name }]} />
+      <CurveHero image={heroImage[t.slug] ?? t.image ?? '/img/consult.webp'} title={t.name} subtitle={t.short} />
 
       {/* In short + Who it can help, with the specialist card alongside */}
       <div className="container-x grid gap-14 pt-16 md:pt-24 lg:grid-cols-[1fr_340px]">
@@ -98,7 +108,7 @@ export function TreatmentDetail() {
           </Reveal>
 
           <Reveal id="who" className="mt-16">
-            <h2 className="h3 md:text-[2rem]">Who it can help</h2>
+            <h2 className="h2 text-balance">Who it can <em className="text-plum">help</em></h2>
             <ul className="mt-6 grid gap-3 sm:grid-cols-2">
               {t.whoFor.map((w) => (
                 <li key={w} className="flex items-start gap-3 rounded-card border border-line bg-white p-4">
@@ -127,28 +137,39 @@ export function TreatmentDetail() {
         <StepAnimation slug={t.slug} steps={t.steps} />
       </section>
 
-      <div className="container-x grid gap-14 pb-16 pt-16 md:pb-24 lg:grid-cols-[1fr_340px]">
-        <article className="min-w-0">
-          <Reveal id="benefits">
-            <div className="rounded-panel bg-plum-900 p-8 text-paper md:p-10">
-              <h2 className="font-display text-2xl !text-paper md:text-3xl">Benefits</h2>
-              <ul className="mt-6 grid gap-4 sm:grid-cols-2">
-                {t.benefits.map((b) => <li key={b} className="flex items-start gap-3 text-paper/85"><Check className="mt-1 h-4 w-4 shrink-0 text-lilac" />{b}</li>)}
-              </ul>
-            </div>
-          </Reveal>
+      {/* Benefits: soft lilac band; heading on top, checked list on the left, photo on the right lined up with the list */}
+      <section id="benefits" className="mt-16 bg-[#F4EAF8] py-14 md:py-20">
+        <Reveal className="container-x grid gap-x-12 gap-y-8 md:grid-cols-[1fr_1.15fr] lg:gap-x-16">
+          <h2 className="h2 text-balance md:col-start-1">
+            Benefits of <em className="text-plum">{t.name}</em>
+          </h2>
+          <ul className="divide-y divide-plum/15 md:col-start-1 md:row-start-2 md:self-center">
+            {t.benefits.map((b) => (
+              <li key={b} className="flex items-center gap-5 py-5 first:pt-0 last:pb-0 text-[1.125rem] leading-snug text-ink md:text-[1.25rem]">
+                <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-[#E7D3EE] text-plum"><Check className="h-5 w-5" strokeWidth={2.5} /></span>
+                {b}
+              </li>
+            ))}
+          </ul>
+          <div className="relative min-h-[16rem] overflow-hidden rounded-[1.5rem] md:col-start-2 md:row-start-2 md:min-h-0">
+            <img src={benefitImage[t.slug] ?? '/img/hero-family.webp'} alt="" loading="lazy" className="absolute inset-0 h-full w-full object-cover" />
+          </div>
+        </Reveal>
+      </section>
 
-          {t.faqs && (
-            <Reveal id="faq" className="mt-16">
-              <h2 className="h3 mb-6 md:text-[2rem]">Common questions</h2>
+      {t.faqs && (
+        <div className="container-x grid gap-14 pb-16 pt-16 md:pb-24 lg:grid-cols-[1fr_340px]">
+          <article className="min-w-0">
+            <Reveal id="faq">
+              <h2 className="h2 mb-6 text-balance">Common <em className="text-plum">questions</em></h2>
               <Accordion items={t.faqs} defaultOpen={0} />
             </Reveal>
-          )}
-        </article>
-      </div>
+          </article>
+        </div>
+      )}
 
       {docs.length > 0 && (
-        <section className="section bg-blush/60">
+        <section className="section bg-white">
           <div className="container-x">
             <SectionHeader eyebrow="Your specialists" title={`Consultants for ${t.name}`} />
             <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">

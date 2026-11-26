@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
-import { Activity, ArrowLeft, ArrowRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, Egg, FlaskConical, GraduationCap, Heart, MapPin, Microscope, Pause, Play, ScanLine, ShieldCheck, Snowflake, Stethoscope, Syringe, TestTube } from 'lucide-react'
+import { Activity, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, Egg, FlaskConical, GraduationCap, Heart, MapPin, Microscope, ScanLine, ShieldCheck, Snowflake, Stethoscope, Syringe, TestTube } from 'lucide-react'
 import { RL, Reveal, SectionHeader, WhatsAppIcon, useMeta } from '../components/ui'
 import { DoctorCard, TodayBadge } from '../components/cards'
 import { Magnetic, ScrollRibbon } from '../components/motion'
@@ -9,7 +9,7 @@ import { Embryo, EMBRYO_LABELS } from '../components/Embryo'
 import { doctors, scheduleSummary } from '../data/doctors'
 import { treatmentBySlug } from '../data/treatments'
 import { centres, ivfJourney, journeys, testimonials } from '../data/content'
-import { waLink } from '../data/site'
+import { site, waLink } from '../data/site'
 import blog from '../data/blog.json'
 
 const EASE = [0.22, 1, 0.36, 1] as const
@@ -149,32 +149,43 @@ function ManifestoWord({ p, i, n, children }: { p: MotionValue<number>; i: numbe
 
 /* ───────────────── 3. Journey selector ───────────────── */
 function JourneySelector() {
-  // Card copy and where each card leads (image, title, short line, text link)
-  const CARD: Record<string, { label: string; desc: string; to: string; img: string; pos: string }> = {
-    conceive: { label: 'Trying to conceive', desc: 'Start with a careful evaluation of both partners.', to: '/treatments/medical-history-evaluation', img: '/img/embryo-2.webp', pos: 'object-[50%_50%]' },
-    miscarriage: { label: 'Miscarriage support', desc: 'Gentle care to find the cause and try again.', to: '/treatments/hysteroscopy', img: '/img/journey-conceive.webp', pos: 'object-[45%_50%]' },
-    preparing: { label: 'Preparing for treatment', desc: 'Clear steps, clear costs and a consultant by your side.', to: '/treatments/ivf', img: '/img/journey-miscarriage.webp', pos: 'object-[60%_50%]' },
-    freezing: { label: 'Egg freezing', desc: 'Preserve your eggs today, on your own timeline.', to: '/treatments/egg-freezing', img: '/img/egg-2.webp', pos: 'object-[50%_50%]' },
+  // Photo cards: a full photo, a small arrow tile in the corner (the only link) and a white caption bar with the question, a short line
+  // and an icon tile. Every other card sits lower on desktop, for a staggered look.
+  const CARD: Record<string, { q: string; sub: string; to: string; img: string; pos: string; Icon: typeof Heart }> = {
+    conceive: { q: 'Trying to conceive?', sub: 'A careful check for both partners', to: '/treatments/medical-history-evaluation', img: '/img/journey-card-conceive.webp', pos: '50% 50%', Icon: Stethoscope },
+    miscarriage: { q: 'After a miscarriage?', sub: 'Gentle care to find the cause', to: '/treatments/hysteroscopy', img: '/img/journey-card-miscarriage.webp', pos: '50% 50%', Icon: Heart },
+    preparing: { q: 'Preparing for treatment?', sub: 'A consultant beside every step', to: '/treatments/ivf', img: '/img/journey-card-preparing.webp', pos: '50% 50%', Icon: CalendarDays },
+    freezing: { q: 'Freezing your eggs?', sub: 'Protect your fertility for later', to: '/treatments/egg-freezing', img: '/img/journey-card-freezing.webp', pos: '50% 50%', Icon: Snowflake },
   }
   return (
     <section className="section">
       <div className="container-x">
         <Reveal className="mb-10 text-center md:mb-14">
-          <h2 className="h2">Your fertility <em className="text-plum">journey</em></h2>
+          <h2 className="h2">Where are you on your <em className="text-plum">journey</em>?</h2>
         </Reveal>
-        <ul className="grid grid-cols-1 gap-x-5 gap-y-12 sm:grid-cols-2 lg:grid-cols-4">
+        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
           {journeys.map((x, i) => {
-            const c = CARD[x.key] ?? { label: x.label, desc: x.title, to: '/treatments', img: x.image, pos: '' }
+            const c = CARD[x.key] ?? { q: `${x.label}?`, sub: x.title, to: '/treatments', img: x.image, pos: '50% 50%', Icon: Heart }
             return (
-              <Reveal as="li" key={x.key} delay={i * 0.06} className="h-full">
-                <Link to={c.to} className="group flex h-full flex-col">
-                  <div className="relative aspect-[9/10] overflow-hidden rounded-none bg-mist">
-                    <img src={c.img} alt="" loading="lazy" className={`absolute inset-0 h-full w-full object-cover ${c.pos} transition duration-700 group-hover:scale-[1.03]`} />
-                  </div>
-                  <h3 className="mt-6 font-sans text-xl font-semibold leading-snug tracking-[0.01em] text-ink transition-colors group-hover:text-plum md:text-2xl">{c.label}</h3>
-                  <p className="mt-2 text-base font-light leading-relaxed text-ink-2 md:text-lg">{c.desc}</p>
-                  <span className="mt-auto pt-6 text-[0.9375rem] font-semibold uppercase text-ink underline decoration-[1.5px] underline-offset-[5px] transition-colors group-hover:text-plum md:text-base">Explore care</span>
-                </Link>
+              <Reveal as="li" key={x.key} delay={i * 0.06} className={i % 2 ? 'lg:mt-16' : ''}>
+                <div className="group relative block aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-mist shadow-[0_30px_60px_-34px_rgba(46,13,54,.45)]">
+                  <img src={c.img} alt="" loading="lazy" style={{ objectPosition: c.pos }}
+                    className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.05]" />
+                  {/* only this arrow opens the page */}
+                  <Link to={c.to} aria-label={`${c.q} Explore care`}
+                    className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-lg bg-ink/25 text-white backdrop-blur-md transition duration-300 hover:bg-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                    <ArrowUpRight className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+                  </Link>
+                  <span className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-xl bg-white px-4 py-3.5 shadow-[0_10px_30px_-12px_rgba(46,13,54,.35)]">
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[1.0625rem] font-semibold text-ink">{c.q}</span>
+                      <span className="mt-0.5 block truncate text-[0.8125rem] text-ink-2">{c.sub}</span>
+                    </span>
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-plum-900 text-white">
+                      <c.Icon className="h-5 w-5" strokeWidth={1.8} />
+                    </span>
+                  </span>
+                </div>
               </Reveal>
             )
           })}
@@ -186,38 +197,45 @@ function JourneySelector() {
 
 /* ───────────────── 4. Treatment index ───────────────── */
 const INDEX = [
-  { slug: 'ivf', img: '/img/lab-microscope.webp', Icon: FlaskConical },
-  { slug: 'icsi', img: '/img/embryo-1.webp', Icon: Microscope },
-  { slug: 'iui', img: '/img/consult.webp', Icon: Syringe },
-  { slug: 'egg-freezing', img: '/img/egg-1.webp', Icon: Egg },
-  { slug: 'embryo-freezing', img: '/img/embryo-3.webp', Icon: Snowflake },
-  { slug: 'folliculometry', img: '/img/folliculometry.webp', Icon: ScanLine },
-  { slug: 'laparoscopy', img: '/img/laparoscopy.webp', Icon: Activity },
-  { slug: 'tesa', img: '/img/semen-2.webp', Icon: TestTube },
+  { slug: 'ivf', img: '/img/lab-microscope.webp', Icon: FlaskConical, desc: 'In vitro fertilization to help you achieve pregnancy.' },
+  { slug: 'icsi', img: '/img/embryo-1.webp', Icon: Microscope, desc: 'A specialised IVF technique where a single sperm is injected into each egg.' },
+  { slug: 'iui', img: '/img/semen-3.webp', Icon: Syringe, desc: 'Carefully prepared sperm is placed directly into the uterus.' },
+  { slug: 'egg-freezing', img: '/img/journey-freezing.webp', Icon: Egg, desc: 'Preserve your eggs today for a more flexible tomorrow.' },
+  { slug: 'embryo-freezing', img: '/img/embryo-3.webp', Icon: Snowflake, desc: 'Safely freeze and store healthy embryos for future use.' },
+  { slug: 'folliculometry', img: '/img/folliculometry.webp', Icon: ScanLine, desc: 'Monitors your ovarian response to plan the right treatment time.' },
+  { slug: 'laparoscopy', img: '/img/laparoscopy.webp', Icon: Activity, desc: 'A minimally invasive procedure to diagnose and treat fertility issues.' },
+  { slug: 'tesa', img: '/img/semen-2.webp', Icon: TestTube, desc: 'A sperm retrieval procedure that helps men with fertility challenges.' },
 ]
 
 function TreatmentIndex() {
+  // One card is highlighted in plum: IVF by default, otherwise the card under the mouse (or focused)
+  const [active, setActive] = useState(0)
   return (
-    <section className="section bg-white">
+    <section className="section relative isolate overflow-hidden bg-gradient-to-b from-[#F6EEF9] via-[#F3EAF7] to-[#F6EEF9]">
+      {/* soft decorative shapes */}
+      <div aria-hidden className="pointer-events-none absolute -right-40 -top-56 -z-10 h-[34rem] w-[34rem] rounded-full bg-[radial-gradient(closest-side,rgba(178,95,191,.16),transparent)]" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-32 -z-10 h-[28rem] w-[28rem] rounded-full bg-[radial-gradient(closest-side,rgba(231,166,240,.18),transparent)]" />
       <div className="container-x">
         <SectionHeader title={<>Wherever you are, there&rsquo;s a <em className="text-plum">next step</em>.</>}
           text="From your first scan to IVF, every treatment you need is here, planned just for you."
-          action={<Link to="/treatments" className="btn-secondary">All 18 treatments <ArrowRight className="h-4 w-4" /></Link>} />
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4">
+          action={<Link to="/treatments" className="inline-flex min-h-[3.25rem] items-center gap-3 rounded-full border border-plum/20 bg-white/60 px-7 text-[0.9375rem] font-semibold text-ink backdrop-blur transition hover:border-plum/40 hover:bg-white">All 18 treatments <ArrowRight className="h-4 w-4" /></Link>} />
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4" onMouseLeave={() => setActive(0)}>
           {INDEX.map((it, i) => {
             const t = treatmentBySlug(it.slug)!
+            const on = active === i
             return (
-              <Reveal as="li" key={it.slug} delay={i * 0.03} y={12} className="h-full">
-                {/* Clean square card; on hover it turns plum and the treatment photo fades in on the right */}
-                <Link to={`/treatments/${t.slug}`}
-                  className="group relative flex h-full flex-col overflow-hidden border border-line bg-white p-7 transition duration-300 ease-out hover:border-plum hover:bg-plum hover:shadow-lift focus-visible:border-plum md:p-8">
-                  <img src={it.img} alt="" loading="lazy" className="pointer-events-none absolute inset-y-0 right-0 h-full w-[75%] object-cover opacity-0 transition duration-500 group-hover:opacity-100" />
-                  <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-plum via-plum/90 to-plum/40 opacity-0 transition duration-500 group-hover:opacity-100" />
+              <Reveal as="li" key={it.slug} delay={i * 0.04} y={14} className="h-full">
+                <Link to={`/treatments/${t.slug}`} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)}
+                  className={`group relative flex h-full min-h-[17rem] flex-col overflow-hidden rounded-[1.5rem] p-6 ring-4 transition duration-500 ease-out md:min-h-[19rem] md:p-7 ${on ? 'bg-gradient-to-br from-plum via-plum-700 to-plum-800 ring-white/70' : 'bg-white/75 ring-white backdrop-blur'}`}>
+                  {/* photo on the right, fading into the card on the left */}
+                  <img src={it.img} alt="" loading="lazy"
+                    className={`pointer-events-none absolute inset-y-0 right-0 h-full w-[56%] object-cover transition duration-700 [mask-image:linear-gradient(to_left,#000_40%,transparent)] group-hover:scale-[1.04] ${on ? 'opacity-90 mix-blend-luminosity' : 'opacity-85'}`} />
+                  {on && <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-plum/90 via-plum-700/50 to-transparent" />}
                   <div className="relative flex flex-1 flex-col">
-                    <span className="grid h-14 w-14 place-items-center bg-lilac/60 text-plum transition duration-300 group-hover:bg-white"><it.Icon className="h-6 w-6" strokeWidth={1.75} /></span>
-                    <p className="mt-8 font-display text-[1.75rem] leading-none text-ink transition group-hover:text-white md:text-[2rem]">{t.name}</p>
-                    <p className="mt-3 line-clamp-2 text-[0.9375rem] leading-relaxed text-muted transition group-hover:text-white/85">{t.short}</p>
-                    <span className="mt-auto inline-flex items-center gap-1.5 pt-7 text-[0.9375rem] font-medium text-plum transition group-hover:text-white">Learn more <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" /></span>
+                    <span className={`grid h-12 w-12 place-items-center rounded-xl transition duration-500 ${on ? 'bg-white/25 text-white' : 'bg-lilac text-plum'}`}><it.Icon className="h-6 w-6" strokeWidth={1.6} /></span>
+                    <p className={`mt-5 max-w-[66%] font-display text-[1.75rem] font-semibold leading-[1.02] tracking-tight transition-colors duration-500 md:text-[1.85rem] ${on ? '!text-white' : 'text-ink'}`}>{t.name}</p>
+                    <p className={`mt-3 max-w-[60%] text-[0.9375rem] leading-relaxed transition-colors duration-500 ${on ? 'text-white/90' : 'text-ink-2'}`}>{it.desc}</p>
+                    <span className="mt-auto grid h-11 w-11 place-items-center rounded-full bg-white text-ink transition duration-300 group-hover:translate-x-1"><ArrowRight className="h-5 w-5" /></span>
                   </div>
                 </Link>
               </Reveal>
@@ -240,7 +258,7 @@ function StoryHeading({ light = false }: { light?: boolean }) {
   return (
     <>
       <p className={`eyebrow mb-4 ${light ? '!text-lilac' : ''}`}>The IVF journey</p>
-      <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>From one cell to a <em className="text-inherit">new life</em>.</h2>
+      <h2 className={`h2 text-balance ${light ? '!text-paper' : ''}`}>From one cell to a <em className={light ? 'text-[#E7A6F0]' : 'text-plum'}>new life</em>.</h2>
       <p className={`mt-4 max-w-md ${light ? 'text-paper/70' : 'text-ink-2'}`}>Six steps, about four to six weeks. Knowing what comes next makes everything lighter.</p>
     </>
   )
@@ -325,6 +343,9 @@ function IvfStoryStacked() {
 }
 
 /* ───────────────── 6. Specialists ───────────────── */
+// Landing page only: Dr. Shamima is shown in her side-angle photo here
+const landingPhoto = (d: (typeof doctors)[number]) => (d.slug === 'dr-shamima-nargis-neela' ? '/img/dr-shamima-side.webp' : d.image)
+
 function Specialists() {
   const wide = useMedia('(min-width: 1024px)')
   return wide ? <SpecialistsSticky /> : <SpecialistsCarousel />
@@ -383,7 +404,9 @@ function SpecialistsSticky() {
   const [active, setActive] = useState(0)
   const dir = useRef(1)
   const d = doctors[active]
-  const tint = d.tint === 'blush' ? 'bg-blush' : d.tint === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
+  // Every doctor uses the first doctor's arch colour
+  const first = doctors[0].tint
+  const tint = first === 'blush' ? 'bg-blush' : first === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
   // The section pins to the screen; scrolling brings each doctor in from the right, one after another
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
   useMotionValueEvent(scrollYProgress, 'change', (p) => {
@@ -401,11 +424,12 @@ function SpecialistsSticky() {
         <div className="container-x w-full">
           <SectionHeader title={<>Meet our <em className="text-plum">specialists</em></>} />
           <div className="grid grid-cols-[.85fr_1.15fr] items-center gap-16">
-            <div className="h-[min(64vh,40rem)]">
-              <div className={`arch relative h-full overflow-hidden transition-colors duration-500 ${tint}`}>
+            <div className="h-[min(72vh,45rem)]">
+              {/* taller, narrower arch (5:7), centred in its column */}
+              <div className={`arch relative mx-auto aspect-[5/7] h-full max-w-full overflow-hidden transition-colors duration-500 ${tint}`}>
                 <div aria-hidden className="arch-full absolute inset-x-[12%] bottom-0 top-[12%] bg-white/50" />
                 <AnimatePresence mode="popLayout" initial={false} custom={dir.current}>
-                  <motion.img key={d.slug} src={d.image} alt={d.name} custom={dir.current}
+                  <motion.img key={d.slug} src={landingPhoto(d)} alt={d.name} custom={dir.current}
                     variants={slide} initial="enter" animate="center" exit="exit" transition={{ duration: 0.45, ease: EASE }}
                     className="absolute inset-x-0 bottom-0 mx-auto h-[92%] w-auto object-contain object-bottom" />
                 </AnimatePresence>
@@ -448,7 +472,7 @@ function SpecialistsCarousel() {
       <div ref={track} data-lenis-prevent-wheel className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 pb-2 scroll-px-5 md:px-8 md:scroll-px-8">
         {doctors.map((d) => (
           <div key={d.slug} className="flex w-[85%] shrink-0 snap-start flex-col rounded-panel bg-white p-4 shadow-soft sm:w-[46%]">
-            <DoctorCard d={d} compact />
+            <DoctorCard d={{ ...d, image: landingPhoto(d) }} compact />
             <p className="mt-2 text-sm text-ink-2">{d.role}</p>
             <DoctorDetails doc={d} compact />
             <div className="mt-auto flex gap-2 pt-5">
@@ -470,120 +494,150 @@ function SpecialistsCarousel() {
 }
 
 /* ───────────────── 7. Why Meena ───────────────── */
-const WHY_VIDEO = '/img/IVF%20Video.mp4'
 
 function WhyBento() {
   const reduce = useReducedMotion()
-  const desktop = useMedia('(min-width: 1024px)')
-  const sectionRef = useRef<HTMLElement>(null)
-  const videoRef = useRef<HTMLVideoElement>(null)
-  const [playing, setPlaying] = useState(!reduce)
-  const [active, setActive] = useState(0)
-
   const items = [
-    { label: 'Self-cycle first', Icon: Stethoscope, img: 'folliculometry', alt: 'Doctor explaining a natural cycle scan to a patient', head: 'A natural start for your', em: 'journey.', text: 'We try your natural cycle first, before any medication.' },
-    { label: 'Personalised treatment plans', Icon: CalendarDays, img: 'consult', alt: 'Couple planning treatment with their doctor', head: 'A plan built around', em: 'you.', text: 'Built around your medical history, condition and goals.' },
-    { label: 'Transparent & affordable care', Icon: ShieldCheck, img: 'journey-miscarriage', alt: 'Couple talking openly with their doctor about the treatment plan', head: 'Clear costs, no', em: 'surprises.', text: 'Clear pricing upfront, with no hidden costs.' },
-    { label: 'Proven treatment protocols', Icon: ChartNoAxesColumnIncreasing, img: 'doctors-duo', alt: 'Meena IVF fertility specialists', head: 'Protocols you can', em: 'trust.', text: 'Internationally recognised protocols for consistent results.' },
-    { label: 'Advanced fertility technology', Icon: Microscope, img: 'lab-microscope', alt: 'Microscope in the Meena IVF lab', head: 'Modern science, in expert', em: 'hands.', text: 'Our in-house OT and IVF lab, all under one roof.' },
-    { label: 'Complete patient support', Icon: Heart, img: 'couple-doctor', alt: 'Doctor supporting an expecting couple', head: 'Cared for at every', em: 'step.', text: 'Counselling and guidance at every stage of treatment.' },
+    { label: 'Self-cycle first', Icon: Stethoscope },
+    { label: 'Personalised treatment plans', Icon: CalendarDays },
+    { label: 'Transparent & affordable care', Icon: ShieldCheck },
+    { label: 'Proven treatment protocols', Icon: ChartNoAxesColumnIncreasing },
+    { label: 'Advanced fertility technology', Icon: Microscope },
+    { label: 'Complete patient support', Icon: Heart },
   ]
-  const n = items.length
-  const cur = items[active]
-
-  // Desktop: the section pins to the screen and scrolling steps through the options
-  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ['start start', 'end end'] })
-  useMotionValueEvent(scrollYProgress, 'change', (p) => {
-    if (desktop) setActive(Math.min(n - 1, Math.max(0, Math.floor(p * n))))
-  })
-
-  const pick = (i: number) => {
-    const el = sectionRef.current
-    if (!desktop || !el) { setActive(i); return }
-    const top = el.getBoundingClientRect().top + window.scrollY
-    const travel = el.offsetHeight - window.innerHeight
-    window.scrollTo({ top: top + travel * ((i + 0.5) / n), behavior: reduce ? 'auto' : 'smooth' })
-  }
-
-  const toggleVideo = () => {
-    const v = videoRef.current
-    if (!v) return
-    if (v.paused) { v.play().catch(() => {}); setPlaying(true) } else { v.pause(); setPlaying(false) }
-  }
 
   return (
-    <section ref={sectionRef} className="section bg-mist lg:h-[420vh] lg:py-0">
-      <div className="container-x lg:sticky lg:top-0 lg:flex lg:h-screen lg:flex-col lg:justify-center">
-        <Reveal className="mb-10 md:mb-14 lg:mb-8">
-          <h2 className="h2 lg:whitespace-nowrap">Why couples trust <em className="text-plum">Meena IVF</em></h2>
-        </Reveal>
-        <div className="grid gap-5 lg:grid-cols-3 lg:items-stretch">
-          {/* Video screen */}
-          <Reveal className="relative min-h-[22rem] overflow-hidden rounded-panel bg-plum-900 shadow-lift">
-            <video ref={videoRef} src={WHY_VIDEO} autoPlay={!reduce} muted loop playsInline preload="metadata"
-              aria-label="Inside Meena IVF: reception, operation theatre and IVF lab"
-              className="absolute inset-0 h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-t from-plum-800/95 via-plum-800/25 to-transparent" />
-            <div className="relative flex h-full min-h-[22rem] items-end justify-between gap-4 p-7 text-paper md:p-9">
-              <div className="flex-1">
-                <p className="text-eyebrow font-semibold uppercase text-paper/85">Take a look inside</p>
-                <h3 className="mt-2 font-display text-3xl !text-paper md:text-[2rem]">Our clinic, OT &amp; IVF lab</h3>
-              </div>
-              <button type="button" onClick={toggleVideo} aria-label={playing ? 'Pause video' : 'Play video'}
-                className="grid h-14 w-14 shrink-0 place-items-center rounded-full border-2 border-paper/90 text-paper backdrop-blur-sm transition hover:bg-paper/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-paper">
-                {playing ? <Pause className="h-5 w-5 fill-current" /> : <Play className="ml-0.5 h-5 w-5 fill-current" />}
-              </button>
-            </div>
+    // Solid theme background; the right side is the TrustOrbit animation
+    <section className="section overflow-hidden bg-mist">
+      <div className="container-x grid items-center gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-10">
+        {/* Left: eyebrow, heading, six reason cards and the button */}
+        <div>
+          <Reveal>
+            <h2 className="h2 lg:whitespace-nowrap">Why couples trust <em className="text-plum">Meena IVF</em></h2>
           </Reveal>
 
-          {/* Options + detail share one box; each half matches the video's width */}
-          <Reveal delay={0.05} className="grid overflow-hidden rounded-panel bg-white/60 shadow-lift ring-1 ring-line lg:col-span-2 lg:grid-cols-[1fr_calc((100%-1.25rem)/2)]">
-          <div className="p-4 md:p-5">
-            <ul className="flex h-full flex-col justify-center gap-3 lg:gap-[12px]">
-              {items.map((it, i) => {
-                const on = i === active
-                return (
-                  <li key={it.label} className="lg:h-[68px]">
-                    <button type="button" onClick={() => pick(i)} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} aria-pressed={on}
-                      className={`flex h-full w-full items-center gap-3 rounded-full border py-2 pl-2 pr-5 text-left transition duration-300 ${on ? 'border-plum/25 bg-white shadow-[0_14px_30px_-14px_rgba(128,41,143,.55)]' : 'border-line bg-white/70 hover:bg-white'}`}>
-                      <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-full transition ${on ? 'bg-plum text-white' : 'bg-lilac/70 text-ink'}`}><it.Icon className="h-5 w-5" strokeWidth={1.75} /></span>
-                      <span className={`text-[0.9375rem] font-semibold leading-snug ${on ? 'text-ink' : 'text-ink-2'}`}>{it.label}</span>
-                    </button>
-                  </li>
-                )
-              })}
-            </ul>
-          </div>
+          <ul className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:mt-12 md:gap-4">
+            {items.map(({ label, Icon }, i) => (
+              <motion.li key={label}
+                initial={reduce ? false : { opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.4 }} transition={{ duration: 0.5, ease: EASE, delay: i * 0.06 }}
+                className="group flex min-h-[9.5rem] flex-col gap-4 rounded-[1.25rem] bg-white p-5 shadow-[0_14px_34px_-22px_rgba(74,21,84,.45)] ring-1 ring-line transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_40px_-22px_rgba(128,41,143,.55)] md:min-h-[11rem] md:p-6">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-lilac text-plum transition duration-300 group-hover:bg-plum group-hover:text-white">
+                  <Icon className="h-6 w-6" strokeWidth={1.75} />
+                </span>
+                <span className="text-[1rem] font-semibold leading-snug text-ink md:text-[1.0625rem]">{label}</span>
+              </motion.li>
+            ))}
+          </ul>
 
-          {/* Inset card: clean photo on top, text below */}
-          <div className="p-4 md:p-5 lg:pl-0">
-            <div className="flex h-full min-h-[28rem] flex-col overflow-hidden rounded-panel bg-gradient-to-br from-plum-700 via-plum-800 to-plum-900 text-paper ring-1 ring-line">
-              <div className="relative h-48 shrink-0 overflow-hidden lg:h-[45%]">
-                <AnimatePresence initial={false}>
-                  <motion.img key={cur.img} src={`/img/${cur.img}.webp`} alt={cur.alt} loading="lazy"
-                    className="absolute inset-0 h-full w-full object-cover"
-                    initial={reduce ? false : { opacity: 0, scale: 1.04 }} animate={{ opacity: 1, scale: 1 }} exit={reduce ? undefined : { opacity: 0 }}
-                    transition={{ duration: 0.6, ease: EASE }} />
-                </AnimatePresence>
-              </div>
-              <div className="flex flex-1 flex-col px-6 pb-6 pt-5 md:px-7 md:pb-7" aria-live="polite">
-                <AnimatePresence mode="wait">
-                  <motion.div key={active} className="mb-5" initial={reduce ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reduce ? undefined : { opacity: 0, y: -8 }} transition={{ duration: 0.35, ease: EASE }}>
-                    <p className="text-eyebrow font-semibold uppercase text-paper/85">{cur.label}</p>
-                    <h3 className="mt-3 font-display text-2xl leading-[1.1] !text-paper xl:text-[2rem]">{cur.head} <em className="text-[#E7A6F0]">{cur.em}</em></h3>
-                    <p className="mt-3 max-w-md leading-relaxed text-paper/85">{cur.text}</p>
-                  </motion.div>
-                </AnimatePresence>
-                <Link to="/why-meena" className="btn-light group mt-auto shrink-0 self-start !text-ink">
-                  Explore Our Approach <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-                </Link>
-              </div>
-            </div>
-          </div>
+          <Reveal delay={0.1} className="mt-10">
+            <Link to="/why-meena" className="btn-primary group !min-h-[56px] !px-8">
+              Explore Our Approach <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+            </Link>
           </Reveal>
         </div>
+
+        {/* Right: a looping, made-in-code animation in place of a photo (see TrustOrbit) */}
+        <Reveal delay={0.1} className="relative mx-auto w-full max-w-[36rem]">
+          <TrustOrbit items={items} />
+        </Reveal>
       </div>
     </section>
+  )
+}
+
+/* Why couples trust Meena IVF: the clinic's results (IVF babies, success rate, consultants, centres) change in the middle of
+   a glowing circle while the six reasons orbit around it on slow counter-turning rings. One reason at a time lights up in
+   plum and its name shows under the circle. */
+function TrustOrbit({ items }: { items: { label: string; Icon: typeof Heart }[] }) {
+  const reduce = useReducedMotion()
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    if (reduce) return
+    const id = window.setInterval(() => setStep((s) => s + 1), 2200)
+    return () => window.clearInterval(id)
+  }, [reduce])
+  const active = step % items.length
+  const stat = step % site.stats.length
+  const RADIUS = 38 // orbit radius, % of the box
+  const spin = (sec: number, dir = 1) => (reduce ? {} : { animate: { rotate: dir * 360 }, transition: { duration: sec, ease: 'linear' as const, repeat: Infinity } })
+  return (
+    <div className="relative aspect-square w-full">
+      {/* backdrop: lilac disc and two dashed rings turning in opposite directions */}
+      <svg aria-hidden viewBox="0 0 600 600" className="absolute inset-0 h-full w-full">
+        <defs>
+          <radialGradient id="to-disc" cx="0.4" cy="0.35" r="0.7">
+            <stop offset="0%" stopColor="#FBF7FD" />
+            <stop offset="60%" stopColor="#EADCF4" />
+            <stop offset="100%" stopColor="#D4B6E8" />
+          </radialGradient>
+        </defs>
+        <circle cx="300" cy="300" r="290" fill="url(#to-disc)" />
+      </svg>
+      <motion.svg aria-hidden viewBox="0 0 600 600" className="absolute inset-0 h-full w-full" {...spin(70)}>
+        <circle cx="300" cy="300" r="228" fill="none" stroke="#B25FBF" strokeOpacity=".35" strokeWidth="1.5" strokeDasharray="2 10" strokeLinecap="round" />
+        <circle cx="300" cy="72" r="5" fill="#B25FBF" />
+      </motion.svg>
+      <motion.svg aria-hidden viewBox="0 0 600 600" className="absolute inset-0 h-full w-full" {...spin(45, -1)}>
+        <circle cx="300" cy="300" r="160" fill="none" stroke="#7B6BB0" strokeOpacity=".3" strokeWidth="1.5" strokeDasharray="14 12" />
+        <circle cx="460" cy="300" r="4" fill="#7B6BB0" />
+      </motion.svg>
+
+      {/* the six reasons orbiting; each chip turns back against the orbit so its icon stays upright */}
+      <motion.div className="pointer-events-none absolute inset-0 z-10" {...spin(60)}>
+        {items.map(({ label, Icon }, i) => {
+          const a = (i / items.length) * Math.PI * 2 - Math.PI / 2
+          const on = i === active
+          return (
+            <div key={label} className="absolute" style={{ left: `${50 + RADIUS * Math.cos(a)}%`, top: `${50 + RADIUS * Math.sin(a)}%`, transform: 'translate(-50%, -50%)' }}>
+              <motion.div {...spin(60, -1)}>
+                <motion.span animate={{ scale: on ? 1.15 : 1 }} transition={{ duration: 0.4, ease: EASE }}
+                  className={`grid h-12 w-12 place-items-center rounded-2xl shadow-[0_12px_24px_-12px_rgba(74,21,84,.5)] ring-4 ring-white/70 transition-colors duration-500 md:h-16 md:w-16 ${on ? 'bg-plum text-white' : 'bg-white text-plum'}`}>
+                  <Icon className="h-5 w-5 md:h-7 md:w-7" strokeWidth={1.75} />
+                </motion.span>
+              </motion.div>
+            </div>
+          )
+        })}
+      </motion.div>
+
+      {/* centre: heartbeat rings and the clinic's results */}
+      <div className="absolute inset-[29%]">
+        {!reduce && [0, 1].map((k) => (
+          <motion.span key={k} aria-hidden className="absolute inset-0 rounded-full border-2 border-plum/30"
+            animate={{ scale: [1, 1.45], opacity: [0.6, 0] }} transition={{ duration: 2.2, repeat: Infinity, ease: 'easeOut', delay: k * 1.1 }} />
+        ))}
+        <div className="relative grid h-full w-full place-items-center rounded-full bg-white shadow-[0_30px_60px_-30px_rgba(74,21,84,.55)] ring-8 ring-white/60">
+          {/* the clinic's published results, one at a time, in the middle of the orbit */}
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div key={stat} initial={reduce ? false : { opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 1.05 }}
+              transition={{ duration: 0.45, ease: EASE }} className="px-4 text-center">
+              <p className="font-display leading-none text-plum" style={{ fontSize: 'clamp(2.5rem, 1.6rem + 3vw, 4.25rem)' }}>
+                {site.stats[stat].value}{site.stats[stat].suffix}
+              </p>
+              <p className="mx-auto mt-2 max-w-[11rem] text-[0.8125rem] font-semibold uppercase leading-snug tracking-wide text-ink-2 md:text-sm">{site.stats[stat].label}</p>
+            </motion.div>
+          </AnimatePresence>
+          {/* the reason that is lit up right now */}
+          <div className="absolute -bottom-5 left-1/2 -translate-x-1/2" aria-live="polite">
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.span key={active} initial={reduce ? false : { opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.3 }}
+                className="block whitespace-nowrap rounded-full bg-plum px-4 py-2 text-[0.8125rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(128,41,143,.8)] md:text-sm">
+                {items[active].label}
+              </motion.span>
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* a few floating sparkles */}
+      {!reduce && [[14, 22, 0], [84, 16, 0.8], [90, 74, 1.6], [10, 80, 2.4]].map(([x, y, d], k) => (
+        <motion.svg key={k} aria-hidden viewBox="0 0 24 24" className="absolute h-4 w-4 text-lavender md:h-5 md:w-5" style={{ left: `${x}%`, top: `${y}%` }}
+          animate={{ y: [0, -10, 0], opacity: [0.4, 1, 0.4], rotate: [0, 45, 0] }} transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', delay: d }}>
+          <path fill="currentColor" d="M12 0c1 6.5 5.5 11 12 12-6.5 1-11 5.5-12 12-1-6.5-5.5-11-12-12C6.5 11 11 6.5 12 0z" />
+        </motion.svg>
+      ))}
+    </div>
   )
 }
 
@@ -591,8 +645,26 @@ function WhyBento() {
 function TestimonialDeck() {
   const reduce = useReducedMotion()
   const photos = ['success-1', 'success-2', 'success-3', 'success-4']
-  // The wire is a quadratic curve y = 10 + 320·x(1−x) (px); each photo hangs at its column centre
-  const sag = (x: number) => 10 + 320 * x * (1 - x)
+  // The wire runs edge to edge of the page: a quadratic curve that sits at 10px at both page edges and sags
+  // WIRE_SAG px at the middle. Each photo hangs at its column centre (x = fraction of the content width).
+  const line = useRef<HTMLDivElement>(null)
+  const [wire, setWire] = useState({ left: 0, cw: 1000, vw: 1000 })
+  useLayoutEffect(() => {
+    const el = line.current
+    if (!el) return
+    const measure = () => {
+      const r = el.getBoundingClientRect()
+      setWire({ left: r.left, cw: r.width, vw: document.documentElement.clientWidth })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(el)
+    window.addEventListener('resize', measure)
+    return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
+  }, [])
+  const WIRE_SAG = 80
+  const wireY = (X: number) => { const t = X / wire.vw; return 10 + 4 * WIRE_SAG * t * (1 - t) }
+  const sag = (x: number) => wireY(wire.left + x * wire.cw)
   return (
     <section className="section overflow-hidden">
       <div className="container-x">
@@ -605,9 +677,10 @@ function TestimonialDeck() {
         </Reveal>
 
         {/* Clothesline */}
-        <div className="relative mt-10 md:mt-14">
-          <svg aria-hidden viewBox="0 0 1000 100" preserveAspectRatio="none" className="absolute inset-x-0 top-0 h-[100px] w-full overflow-visible">
-            <path d="M0 10 Q500 170 1000 10" fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" className="text-ink/35" />
+        <div ref={line} className="relative mt-10 md:mt-14">
+          <svg aria-hidden viewBox={`0 0 ${wire.vw} 100`} preserveAspectRatio="none" className="absolute top-0 h-[100px] overflow-visible"
+            style={{ left: -wire.left, width: wire.vw }}>
+            <path d={`M0 10 Q${wire.vw / 2} ${10 + 2 * WIRE_SAG} ${wire.vw} 10`} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" className="text-ink/35" />
           </svg>
           <ul className="relative grid grid-cols-4 gap-3 md:gap-10">
             {photos.map((s, i) => (
@@ -633,24 +706,111 @@ function TestimonialDeck() {
         </div>
       </div>
 
-      {/* Reviews: continuous right-to-left marquee, no edge fades */}
-      <div className="group mt-14 overflow-hidden md:mt-20 motion-reduce:overflow-x-auto">
-        <ul className="flex w-max animate-[marquee_60s_linear_infinite] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
-          {[...testimonials, ...testimonials].map((t, i) => (
-            <li key={`${t.name}-${i}`} aria-hidden={i >= testimonials.length || undefined} className="w-[19rem] shrink-0 pr-5 md:w-[26rem]">
-              <figure className="flex h-full flex-col rounded-panel border border-line bg-white p-6 md:p-8">
-                <span aria-hidden className="font-display text-6xl leading-[0.6] text-lilac">“</span>
-                <blockquote className="mt-3 flex-1 font-display text-[1.1rem] leading-snug text-ink md:text-[1.25rem]">{t.quote}</blockquote>
-                <figcaption className="mt-6 flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded-full bg-plum font-semibold text-white">{t.name[0]}</span>
-                  <span><span className="block font-semibold">{t.name}</span><span className="text-sm text-muted">{t.city} · {t.date}</span></span>
-                </figcaption>
-              </figure>
-            </li>
-          ))}
-        </ul>
-      </div>
+      <ReviewMarquee />
     </section>
+  )
+}
+
+/* Reviews: keeps drifting right-to-left; hovering pauses it and the reviews can be dragged (or scrolled sideways) by hand. */
+function ReviewMarquee() {
+  const reduce = useReducedMotion()
+  const track = useRef<HTMLDivElement>(null)
+  const hovering = useRef(false)
+  const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
+  const [dragging, setDragging] = useState(false)
+  const list = [...testimonials, ...testimonials]
+
+  // keep the scroll position inside the first copy so the loop never runs out
+  const wrap = (el: HTMLDivElement) => {
+    const half = el.scrollWidth / 2
+    if (half <= 0) return
+    if (el.scrollLeft >= half) el.scrollLeft -= half
+    else if (el.scrollLeft < 0) el.scrollLeft += half
+  }
+
+  // distance still to travel from a left/right arrow press, eased out frame by frame
+  const nudge = useRef(0)
+
+  useEffect(() => {
+    if (reduce) return
+    let raf = 0
+    let last = performance.now()
+    let pos = track.current?.scrollLeft ?? 0
+    const tick = (now: number) => {
+      const el = track.current
+      const dt = Math.min(64, now - last); last = now
+      if (el) {
+        if (hovering.current || drag.current) { pos = el.scrollLeft; nudge.current = 0 }
+        else {
+          const step = Math.abs(nudge.current) < 0.5 ? nudge.current : nudge.current * Math.min(1, dt * 0.009)
+          nudge.current -= step
+          pos += dt * 0.045 + step
+          const half = el.scrollWidth / 2
+          if (pos < 0 && half > 0) pos += half
+          el.scrollLeft = pos; wrap(el); pos = el.scrollLeft
+        }
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [reduce])
+
+  // arrows move the reviews by one card
+  const move = (dir: number) => {
+    const el = track.current
+    if (!el) return
+    const card = (el.querySelector('li') as HTMLElement | null)?.offsetWidth ?? 400
+    if (reduce) {
+      if (dir < 0 && el.scrollLeft < card) el.scrollLeft += el.scrollWidth / 2
+      el.scrollBy({ left: dir * card, behavior: 'smooth' })
+    } else nudge.current += dir * card
+  }
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== 'mouse' || !track.current) return
+    drag.current = { x: e.clientX, left: track.current.scrollLeft, moved: false }
+    setDragging(true)
+  }
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const el = track.current, d = drag.current
+    if (!el || !d) return
+    const dx = e.clientX - d.x
+    if (Math.abs(dx) > 3) d.moved = true
+    el.scrollLeft = d.left - dx
+    wrap(el)
+    if (el.scrollLeft !== d.left - dx) { d.left = el.scrollLeft + dx }
+  }
+  const endDrag = () => { drag.current = null; setDragging(false) }
+
+  return (
+    <>
+    <div ref={track}
+      onMouseEnter={() => { hovering.current = true }} onMouseLeave={() => { hovering.current = false; endDrag() }}
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}
+      onScroll={(e) => wrap(e.currentTarget)}
+      className={`no-scrollbar mt-14 select-none overflow-x-auto md:mt-20 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      <ul className="flex w-max py-2">
+        {list.map((t, i) => (
+          <li key={`${t.name}-${i}`} aria-hidden={i >= testimonials.length || undefined} className="w-[19rem] shrink-0 pr-5 md:w-[26rem]">
+            <figure className="flex h-full flex-col rounded-panel border border-line bg-white p-6 md:p-8">
+              <span aria-hidden className="font-display text-6xl leading-[0.6] text-lilac">“</span>
+              <blockquote className="mt-3 flex-1 font-display text-[1.1rem] leading-snug text-ink md:text-[1.25rem]">{t.quote}</blockquote>
+              <figcaption className="mt-6 flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-full bg-plum font-semibold text-white">{t.name[0]}</span>
+                <span><span className="block font-semibold">{t.name}</span><span className="text-sm text-muted">{t.city} · {t.date}</span></span>
+              </figcaption>
+            </figure>
+          </li>
+        ))}
+      </ul>
+    </div>
+    {/* Left / right controls, so visitors can see the reviews can be moved by hand */}
+    <div className="container-x mt-6 flex justify-end gap-2">
+      <button type="button" onClick={() => move(-1)} aria-label="Previous reviews" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowLeft className="h-5 w-5" /></button>
+      <button type="button" onClick={() => move(1)} aria-label="Next reviews" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowRight className="h-5 w-5" /></button>
+    </div>
+    </>
   )
 }
 
@@ -664,6 +824,9 @@ const PIN_LAYOUT: Record<string, { x: number; y: number; w: number; order: numbe
 // Teardrop outline (ring) and the inner window the photo is clipped to, in a 100×130 box
 const PIN_OUTER = 'M50 128 C38 108 4 86 4 50 A46 46 0 1 1 96 50 C96 86 62 108 50 128 Z'
 const PIN_INNER = 'M50 114 C40 99 11 81 11 50 A39 39 0 1 1 89 50 C89 81 60 99 50 114 Z'
+// Location ripple copied from the reference Lottie (60 frames at 30fps = 2s): rings start at frames 0, 9 and 19
+const PIN_ENTER = 0.8
+const LOC_RING_OFFSETS = [0, 9, 19]
 
 function CentrePin({ c, featured, delay, positioned, show }: { c: (typeof centres)[number]; featured: boolean; delay: number; positioned: boolean; show?: boolean }) {
   const reduce = useReducedMotion()
@@ -710,6 +873,7 @@ function CentresArches() {
     { d: 'M575,252 C630,238 680,238 742,290', end: [742, 290] },
   ]
   const pinDelay = (slug: string) => P(slug).order * 0.22
+  const pinLoopStart = (slug: string) => pinDelay(slug) + PIN_ENTER
   const stage = useRef<HTMLDivElement>(null)
   const show = useInView(stage, { once: true, amount: 0.3 })
   return (
@@ -720,29 +884,28 @@ function CentresArches() {
         {/* md+: pins on a stage, joined by dashed routes */}
         <div ref={stage} className="relative hidden aspect-[1000/340] md:block">
           <svg aria-hidden viewBox="0 0 1000 340" className="absolute inset-0 h-full w-full overflow-visible">
-            <defs>
-              <radialGradient id="tip-glow"><stop offset="0%" stopColor="#E7A6F0" stopOpacity=".85" /><stop offset="100%" stopColor="#E7A6F0" stopOpacity="0" /></radialGradient>
-            </defs>
             {/* ground rings and glow under each pin */}
             {list.map((c) => {
               const L = P(c.slug)
               const big = c.slug === 'banani'
-              const rx = big ? 70 : 48
-              const ry = big ? 20 : 13
+              // full ring size: about 1.6× the pin's width, 2.77:1 ellipse
+              const rx = L.w * 10 * 0.8
+              const ry = rx / 2.77
               return (
                 <g key={c.slug} transform={`translate(${toX(L.x)} ${toY(L.y)})`}>
-                  {[1, 1.8, 2.7].map((k, i) => (
-                    <motion.ellipse key={i} rx={rx * k} ry={ry * k} fill="none" stroke="#B25FBF" strokeWidth="1"
-                      initial={reduce ? false : { opacity: 0 }} animate={show ? { opacity: 0.35 - i * 0.09 } : undefined}
-                      transition={{ duration: 0.8, delay: pinDelay(c.slug) + 0.3 + i * 0.12 }} />
-                  ))}
-                  {/* two rings leave the tip and each settles into one of the outer ground lines */}
-                  {!reduce && [1.8, 2.7].map((k, i) => (
-                    <motion.ellipse key={k} rx={rx} ry={ry} fill="none" stroke="#B25FBF" strokeWidth="1.5" vectorEffect="non-scaling-stroke"
-                      initial={{ scale: 1, opacity: 0 }} animate={{ scale: [1, k, k], opacity: [0.6, 0.35 - (i + 1) * 0.09, 0] }}
-                      transition={{ duration: 2.6, times: [0, 0.8, 1], repeat: Infinity, ease: 'easeOut', delay: pinDelay(c.slug) + 1 + i * 0.5 }} />
-                  ))}
-                  <ellipse rx={big ? 46 : 30} ry={big ? 14 : 9} fill="url(#tip-glow)" />
+                  {/* location ripple (same timing as the reference Lottie): three rings grow from the tip and fade, on a slow 6s loop and fully opaque at their peak */}
+                  {!reduce && show && LOC_RING_OFFSETS.map((o, i) => {
+                    const a = o / 60, b = (o + 21) / 60, e = (o + 31) / 60
+                    return (
+                      <motion.ellipse key={i} rx={rx} ry={ry} fill="none" stroke="#DDB3E6" strokeWidth={big ? 2 : 1.5} vectorEffect="non-scaling-stroke"
+                        initial={{ scale: 0.03, opacity: 0 }}
+                        animate={{ scale: [0.03, 0.03, 1, 1], opacity: [0, 0, 1, 0, 0] }}
+                        transition={{
+                          scale: { duration: 6, times: [0, a, e, 1], ease: ['linear', i === 0 ? [0.333, 0, 0.554, 1] : [0.333, 0, 0.667, 1], 'linear'], repeat: Infinity, delay: pinLoopStart(c.slug) },
+                          opacity: { duration: 6, times: [0, a, b, e, 1], ease: ['linear', [0.333, 0, 0.667, 1], [0.333, 0, 0.667, 1], 'linear'], repeat: Infinity, delay: pinLoopStart(c.slug) },
+                        }} />
+                    )
+                  })}
                 </g>
               )
             })}
@@ -783,7 +946,7 @@ function Learn() {
             <Reveal key={p.slug} delay={i * 0.08}>
               <Link to={`/blog/${p.slug}`} className="group block">
                 <div className="aspect-[16/10] overflow-hidden rounded-card bg-mist"><img src={p.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /></div>
-                <p className="mt-5 text-sm text-muted">{p.categories.join(' · ')} · {p.readMinutes} min read</p>
+                <p className="mt-5 text-sm text-muted">{p.categories.join(' · ')}</p>
                 <h3 lang="bn" className="mt-2 font-bn text-[1.4rem] font-semibold leading-snug text-ink group-hover:text-plum">{p.title}</h3>
               </Link>
             </Reveal>
@@ -802,9 +965,9 @@ export default function Home() {
       <ArchManifesto />
       <JourneySelector />
       <TreatmentIndex />
-      <ScrollRibbon className="border-y border-line bg-mist py-6 font-display text-[clamp(2.5rem,1.5rem+4vw,6rem)] leading-none md:py-10" words={['IVF', 'ICSI', 'IUI', 'Egg freezing', 'Embryo freezing', 'Laparoscopy', 'Hysteroscopy', 'TESA', 'Counselling']} />
-      <IvfStory />
       <Specialists />
+      <ScrollRibbon auto className="mt-16 border-y border-line bg-mist py-6 md:mt-24 lg:mt-28 font-display text-[clamp(2.5rem,1.5rem+4vw,6rem)] leading-none md:py-10" words={['IVF', 'ICSI', 'IUI', 'Egg freezing', 'Embryo freezing', 'Laparoscopy', 'Hysteroscopy', 'TESA', 'Counselling']} />
+      <IvfStory />
       <WhyBento />
       <TestimonialDeck />
       <CentresArches />

@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import { ArrowRight, GraduationCap, MapPin, Phone } from 'lucide-react'
-import { CTABand, PageHero, RL, Reveal, useMeta } from '../components/ui'
-import { DoctorCard, TodayBadge } from '../components/cards'
-import { dayShort, dhakaDay, doctorBySlug, doctors, sessionsOn } from '../data/doctors'
-import { treatmentBySlug } from '../data/treatments'
+import { ArrowLeft, Check, Mail, MapPin, Phone } from 'lucide-react'
+import { CTABand, PageHero, Reveal, useMeta } from '../components/ui'
+import { DoctorCard } from '../components/cards'
+import { dayNames, dhakaDay, doctorBySlug, doctors, sessionsOn } from '../data/doctors'
+import { site } from '../data/site'
 import NotFound from './NotFound'
 
 const filters = [
@@ -51,121 +51,146 @@ export function DoctorsIndex() {
   )
 }
 
+/* Doctor profile, laid out like the reference: back pill; left column with photo, contact card and a dark weekly
+   schedule; right column with About, stat cards, areas of expertise and education & experience. */
+
 export function DoctorProfile() {
   const { slug } = useParams()
   const d = doctorBySlug(slug)
   useMeta(d ? d.name : 'Not found', d?.intro)
-  const [expanded, setExpanded] = useState(false)
+  // each column sticks at the top if it fits the screen, otherwise once its bottom comes into view
+  const leftCol = useRef<HTMLDivElement>(null)
+  const rightCol = useRef<HTMLDivElement>(null)
+  const [tops, setTops] = useState<[number, number]>([112, 112])
+  useEffect(() => {
+    const calc = () => {
+      const t = (el: HTMLDivElement | null) => (el ? Math.min(112, window.innerHeight - el.offsetHeight - 32) : 112)
+      setTops([t(leftCol.current), t(rightCol.current)])
+    }
+    calc()
+    const ro = new ResizeObserver(calc)
+    if (leftCol.current) ro.observe(leftCol.current)
+    if (rightCol.current) ro.observe(rightCol.current)
+    window.addEventListener('resize', calc)
+    return () => { ro.disconnect(); window.removeEventListener('resize', calc) }
+  }, [slug])
   if (!d) return <NotFound />
   const today = dhakaDay()
   const week = [6, 0, 1, 2, 3, 4, 5]
-  const tint = d.tint === 'blush' ? 'bg-blush' : d.tint === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
+  const available = d.schedule.length > 0
 
   return (
     <>
-      <section className={`grain relative overflow-hidden ${tint}`}>
-        <div className="container-x relative grid items-end gap-6 pt-28 md:pt-32 lg:grid-cols-[1.15fr_.85fr]">
-          <div className="pb-12 md:pb-20">
-            <nav aria-label="Breadcrumb" className="mb-6 text-sm text-ink-2/80">
-              <Link to="/" className="inline-flex min-h-[2.75rem] items-center hover:text-plum">Home</Link> <span className="mx-1.5 opacity-50">/</span>
-              <Link to="/doctors" className="inline-flex min-h-[2.75rem] items-center hover:text-plum">Doctors</Link>
-            </nav>
-            <Reveal>
-              <div className="flex flex-wrap items-center gap-3"><span className="chip !bg-white">{d.title}</span><TodayBadge doctor={d} /></div>
-              <h1 className="h1 mt-5 text-balance">{d.name}</h1>
-              <p className="mt-3 text-lg font-medium text-plum">{d.role}</p>
-              <p className="lead mt-5 max-w-xl">{d.intro}</p>
-              <div className="btn-pair mt-8">
-                <Link to={`/book?doctor=${d.slug}`} className="btn-primary"><RL short="Book now" long={`Book with ${d.short}`} /> <ArrowRight className="h-4 w-4" /></Link>
-                <a href={`tel:${d.phone}`} className="btn-secondary !bg-white/60"><Phone className="h-4 w-4" /> <RL short="Call" long="Call for appointment" /></a>
-              </div>
-            </Reveal>
+      <div className="bg-mist pb-16 pt-28 md:pb-24 md:pt-32">
+        <div className="container-x">
+          <Link to="/doctors" className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-full bg-white px-5 text-[0.9375rem] font-medium text-ink shadow-soft transition hover:text-plum">
+            <ArrowLeft className="h-4 w-4" /> All Doctors
+          </Link>
+
+          <div className="mt-8 grid gap-10 lg:grid-cols-[400px_1fr] lg:gap-14">
+            {/* left column (sticky: whichever column ends first stays in view, then both scroll up together) */}
+            <div ref={leftCol} className="space-y-6 lg:sticky lg:self-start" style={{ top: tops[0] }}>
+              <Reveal className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-lilac via-[#E3D3F1] to-[#C9A6E2]">
+                <img src={d.image} alt={d.name} className="mx-auto block aspect-[5/6] w-full object-contain object-bottom pt-6" />
+                {available && (
+                  <span className="absolute bottom-5 left-5 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[0.9375rem] font-medium text-ink shadow-soft">
+                    <span className="h-2.5 w-2.5 rounded-full bg-ok" /> Available this week
+                  </span>
+                )}
+              </Reveal>
+
+              <Reveal className="rounded-[1.5rem] bg-white p-7 shadow-soft md:p-8">
+                <h2 className="font-display text-[1.75rem] leading-tight text-ink">{d.name}</h2>
+                <p className="mt-1 text-ink-2">{d.title} · {d.role}</p>
+                <ul className="mt-6 space-y-4">
+                  {[
+                    { Icon: Phone, label: 'Phone', value: d.phone.replace('+880', '0'), href: `tel:${d.phone}` },
+                    { Icon: Mail, label: 'Email', value: site.email, href: `mailto:${site.email}` },
+                    { Icon: MapPin, label: 'Clinic', value: 'Banani Centre, Dhaka' },
+                  ].map(({ Icon, label, value, href }) => (
+                    <li key={label} className="flex items-center gap-4">
+                      <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-plum text-white"><Icon className="h-5 w-5" /></span>
+                      <span className="min-w-0">
+                        <span className="block text-sm text-muted">{label}</span>
+                        {href ? <a href={href} className="block truncate font-medium text-ink hover:text-plum">{value}</a> : <span className="block font-medium text-ink">{value}</span>}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+
+              <Reveal className="rounded-[1.5rem] bg-plum-900 p-7 text-paper md:p-8">
+                <h3 className="font-display text-2xl !text-paper">Weekly schedule</h3>
+                <ul className="mt-5">
+                  {week.map((day) => {
+                    const s = sessionsOn(d, day)
+                    return (
+                      <li key={day} className={`flex items-center justify-between gap-4 border-b border-white/15 py-3.5 text-[0.9375rem] ${day === today ? 'text-[#E7A6F0]' : ''}`}>
+                        <span>{dayNames[day]}{day === today && <span className="ml-2 rounded-full bg-white/15 px-2 py-0.5 text-xs">Today</span>}</span>
+                        <span className={s.length ? '' : 'text-paper/50'}>{s.length ? s.map((x) => `${x.from} – ${x.to}`).join(', ') : 'Closed'}</span>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <div className="mt-6 flex items-center justify-between gap-4">
+                  <span><span className="block text-sm text-paper/70">Chamber</span><span className="font-semibold">Banani Centre</span></span>
+                  <Link to={`/book?doctor=${d.slug}`} className="btn-light !min-h-[44px] !px-5">Book Appointment</Link>
+                </div>
+              </Reveal>
+            </div>
+
+            {/* right column (sticky the same way) */}
+            <div ref={rightCol} className="min-w-0 lg:sticky lg:self-start" style={{ top: tops[1] }}>
+              <Reveal>
+                <h1 className="font-display text-ink" style={{ fontSize: 'clamp(2.25rem, 1.5rem + 2.6vw, 4rem)', lineHeight: 1.05, letterSpacing: '-0.02em' }}>
+                  About <em className="text-plum">{d.name}</em>
+                </h1>
+                <div className="mt-6 space-y-5 text-[1.0625rem] leading-[1.75] text-ink-2">{d.about.map((p, i) => <p key={i}>{p}</p>)}</div>
+              </Reveal>
+
+              {d.stats.length > 0 && (
+                <div className="mt-10 grid gap-4 sm:grid-cols-3">
+                  {d.stats.slice(0, 3).map((st, i) => (
+                    <Reveal key={st.label} delay={i * 0.06} className="rounded-[1.25rem] bg-white p-7 shadow-soft">
+                      <p className="font-display text-4xl text-plum-900">{st.value}</p>
+                      <p className="mt-2 text-ink-2">{st.label}</p>
+                    </Reveal>
+                  ))}
+                </div>
+              )}
+
+              <Reveal className="mt-14">
+                <h2 className="h2 text-balance">Areas of <em className="text-plum">expertise</em></h2>
+                <ul className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {d.focus.map((f) => (
+                    <li key={f} className="flex items-center gap-3 rounded-xl bg-white px-4 py-3.5 text-ink">
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full bg-plum text-white"><Check className="h-4 w-4" strokeWidth={2.5} /></span>{f}
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+
+              <Reveal className="mt-14">
+                <h2 className="h2 text-balance">Education &amp; <em className="text-plum">experience</em></h2>
+                <div className="mt-6 grid gap-3 sm:grid-cols-2">
+                  {d.qualifications.map((q) => {
+                    const yr = q.detail.match(/(19|20)\d{2}/)?.[0]
+                    return (
+                      <div key={q.title} className="flex flex-col rounded-[1.25rem] bg-lilac/60 p-6">
+                        <span className="w-fit rounded-full bg-white px-3 py-1 text-sm text-ink">{yr ?? 'Training'}</span>
+                        <h3 className="mt-8 text-lg font-semibold leading-snug text-ink">{q.title}</h3>
+                        <p className="mt-2 text-ink-2">{q.detail}</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </Reveal>
+            </div>
           </div>
-          <Reveal delay={0.1} className="relative mx-auto w-full max-w-[460px]">
-            <div aria-hidden className="arch-full absolute inset-x-[6%] bottom-0 top-[8%] bg-white/55" />
-            <img src={d.image} alt={d.name} className="relative mx-auto h-auto w-full max-w-[440px] object-contain" />
-          </Reveal>
         </div>
-      </section>
-
-      <section className="border-b border-line bg-white">
-        <div className={`container-x grid divide-line ${d.stats.length > 2 ? 'grid-cols-2 md:grid-cols-4 md:divide-x' : 'grid-cols-2 divide-x'}`}>
-          {d.stats.map((s) => (
-            <div key={s.label} className="py-7 md:px-8 md:first:pl-0">
-              <p className="font-display text-4xl text-ink">{s.value}</p><p className="mt-1 text-sm text-muted">{s.label}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <div className="container-x grid gap-14 py-16 md:py-24 lg:grid-cols-[1fr_380px]">
-        <div className="min-w-0">
-          <Reveal>
-            <p className="eyebrow mb-4">About</p>
-            <div className="space-y-5 text-[1.0625rem] leading-[1.75] text-ink-2">
-              {(expanded ? d.about : d.about.slice(0, 1)).map((p, i) => <p key={i} className={i === 0 ? 'font-display text-[1.35rem] leading-snug text-ink' : ''}>{p}</p>)}
-            </div>
-            {d.about.length > 1 && <button onClick={() => setExpanded(!expanded)} aria-expanded={expanded} className="link-quiet mt-5">{expanded ? 'Show less' : 'Read full biography'}</button>}
-          </Reveal>
-
-          <Reveal className="mt-14">
-            <h2 className="h3">Areas of expertise</h2>
-            <div className="mt-5 flex flex-wrap gap-2">{d.focus.map((f) => <span key={f} className="chip !px-4 !py-2 !text-sm">{f}</span>)}</div>
-            {d.treatments.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-x-5 text-sm">
-                <span className="text-muted">Treatments:</span>
-                {d.treatments.map((s) => { const t = treatmentBySlug(s); return t && <Link key={s} to={`/treatments/${s}`} className="inline-flex min-h-[2.75rem] items-center font-semibold text-plum hover:underline">{t.name}</Link> })}
-              </div>
-            )}
-          </Reveal>
-
-          <Reveal className="mt-14">
-            <h2 className="h3">Qualifications &amp; training</h2>
-            <ol className="mt-6 grid gap-3 sm:grid-cols-2">
-              {d.qualifications.map((q) => (
-                <li key={q.title} className="flex gap-4 rounded-card border border-line bg-white p-5">
-                  <GraduationCap className="mt-0.5 h-5 w-5 shrink-0 text-lavender" />
-                  <span><span className="block font-semibold text-ink">{q.title}</span><span className="text-sm text-muted">{q.detail}</span></span>
-                </li>
-              ))}
-            </ol>
-          </Reveal>
-        </div>
-
-        <aside className="lg:sticky lg:top-28 lg:self-start">
-          <div className="card overflow-hidden shadow-soft">
-            <div className="border-b border-line p-6">
-              <p className="text-eyebrow font-semibold uppercase text-muted">Weekly chamber</p>
-              <p className="mt-2 flex items-center gap-2 text-sm text-ink-2"><MapPin className="h-4 w-4 text-lavender" />Banani Centre, Dhaka</p>
-            </div>
-            <ul className="divide-y divide-line">
-              {week.map((day) => {
-                const s = sessionsOn(d, day)
-                const isToday = day === today
-                return (
-                  <li key={day} className={`flex items-center justify-between px-6 py-3 text-sm ${isToday ? 'bg-mist' : ''}`}>
-                    <span className={`font-semibold ${s.length ? 'text-ink' : 'text-muted/60'}`}>{dayShort[day]}{isToday && <span className="ml-2 rounded-full bg-plum px-2 py-0.5 text-xs text-white">Today</span>}</span>
-                    <span className={s.length ? 'font-medium text-ink' : 'text-muted/60'}>{s.length ? s.map((x) => `${x.from} – ${x.to}`).join(', ') : 'Off'}</span>
-                  </li>
-                )
-              })}
-            </ul>
-            <div className="btn-pair p-6 sm:!grid sm:grid-cols-1 sm:!gap-2">
-              <Link to={`/book?doctor=${d.slug}`} className="btn-primary sm:!w-full">Book<span className="hidden sm:inline">&nbsp;appointment</span></Link>
-              <a href={`tel:${d.phone}`} className="btn-secondary sm:!w-full"><Phone className="h-4 w-4" /> <RL short="Call" long={d.phone.replace('+880', '0')} /></a>
-            </div>
-          </div>
-        </aside>
       </div>
 
-      <section className="section bg-mist">
-        <div className="container-x">
-          <h2 className="h2 mb-10">Other specialists</h2>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-            {doctors.filter((x) => x.slug !== d.slug).map((x) => <DoctorCard key={x.slug} d={x} compact />)}
-          </div>
-        </div>
-      </section>
+      <CTABand title={`Book your consultation with ${d.short}.`} />
     </>
   )
 }

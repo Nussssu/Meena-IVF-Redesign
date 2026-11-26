@@ -235,6 +235,17 @@ export const videos = [
   { id: 'yCQIslCB3t0', title: 'Infertility awareness & IVF treatment', by: 'Meena IVF' },
 ]
 
+// Every public video on the Meena IVF YouTube channel (youtube.com/@MeenaIVF), newest first; titles tidied (no hashtags or emoji)
+export const channelVideos = [
+  { id: 'ZjTCXipjjXE', title: 'Dr. Lubna Yasmin talks about infertility and treatments', by: 'Dr. Lubna Yasmin' },
+  { id: '7EyDjOzENQI', title: 'DFI Test কি? কাদের জন্য?', by: 'Meena IVF' },
+  { id: 'U0W_qTq0u88', title: 'বাচ্চা হচ্ছে না? কোন টেস্টগুলো আগে করা উচিত?', by: 'Meena IVF' },
+  { id: 'kCrZMzvJc3w', title: 'Facts about PCOS', by: 'Dr. Lubna Yasmin' },
+  { id: 'hGmfHXthxMc', title: 'Low AMH নিয়ে যত ভুল ধারণা', by: 'Meena IVF' },
+  { id: 'vx_np_clnL4', title: 'Facts about PCOS', by: 'Meena IVF' },
+  { id: 'RsD8Iy4S0DA', title: 'What is PGT in IVF?', by: 'Dr. Lubna Yasmin' },
+]
+
 export const milestones = [
   { year: '2025', title: 'The beginning', text: 'Meena IVF & Fertility Care began with a vision of trusted fertility care with compassion and expertise.' },
   { year: '2025', title: 'Service expansion', text: 'Clinical systems strengthened; fertility support expanded for patients seeking modern treatment.' },

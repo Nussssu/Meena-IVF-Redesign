@@ -19,7 +19,7 @@ export function Blog() {
   const [feat, ...rest] = posts
   return (
     <>
-      <PageHero crumbs={[{ label: 'Learn' }, { label: 'Blog' }]} eyebrow="Meena IVF blog" title={<>Fertility knowledge that <em className="text-plum">calms</em> the mind.</>}
+      <PageHero crumbs={[{ label: 'Journeys', to: '/resources' }, { label: 'Blog' }]} eyebrow="Meena IVF blog" title={<>Fertility knowledge that <em className="text-plum">calms</em> the mind.</>}
         text={<span lang="bn" className="font-bn">নির্ভরযোগ্য fertility insights, IVF/IUI সচেতনতা, এবং চিকিৎসার প্রতিটি ধাপে সহায়ক তথ্য, বিশেষজ্ঞদের পরামর্শে।</span>} />
       <div className="container-x py-12 md:py-16">
         <div role="group" aria-label="Filter by category" className="no-scrollbar -mx-5 mb-10 flex gap-2 overflow-x-auto px-5 md:mx-0 md:px-0">
@@ -70,17 +70,17 @@ export function BlogPost() {
     <>
       <div className="fixed inset-x-0 top-0 z-[60] h-1 origin-left bg-plum" style={{ transform: `scaleX(${progress})` }} aria-hidden />
       <article className="pb-16 pt-28 md:pt-36">
-        <header className="container-x max-w-3xl">
+        <header className="container-x max-w-5xl">
           <Link to="/blog" className="link-quiet mb-8"><ArrowLeft className="h-4 w-4" /> All articles</Link>
           <div className="flex flex-wrap gap-2">{p.categories.map((c) => <span key={c} className="chip">{c}</span>)}</div>
           <h1 lang="bn" className="mt-5 font-bn text-4xl font-semibold leading-tight tracking-normal md:text-5xl">{p.title}</h1>
           <p className="mt-5 text-muted">{p.author} · {fmtDate(p.date)} · {p.readMinutes} min read</p>
         </header>
-        <div className="container-x mt-10 max-w-4xl"><img src={p.image} alt="" className="w-full rounded-panel" /></div>
-        <div lang="bn" className="container-x mt-12 max-w-[68ch] space-y-6 font-bn text-[1.1875rem] leading-[1.9] text-ink-2">
+        <div className="container-x mt-10 max-w-5xl"><img src={p.image} alt="" className="w-full rounded-panel" /></div>
+        <div lang="bn" className="container-x mt-12 max-w-5xl space-y-6 font-bn text-[1.1875rem] leading-[1.9] text-ink-2">
           {p.body.map((para, i) => <p key={i} className={i === 0 ? 'text-[1.3125rem] text-ink' : ''}>{para}</p>)}
         </div>
-        <div className="container-x mt-14 max-w-[68ch]">
+        <div className="container-x mt-14 max-w-5xl">
           <div className="rounded-panel bg-mist p-7 md:p-9">
             <p lang="bn" className="font-bn text-2xl font-semibold">আপনার প্রশ্ন আছে?</p>
             <p className="mt-2 text-ink-2">Talk to our fertility specialists for personalised guidance.</p>
@@ -90,7 +90,7 @@ export function BlogPost() {
       </article>
       <section className="section bg-white">
         <div className="container-x">
-          <h2 className="h2 mb-10">Keep reading</h2>
+          <h2 className="h2 mb-10 text-balance">Keep <em className="text-plum">reading</em></h2>
           <div className="grid gap-8 md:grid-cols-3">
             {others.map((o) => (
               <Link key={o.slug} to={`/blog/${o.slug}`} className="group block">
@@ -110,7 +110,7 @@ export function Videos() {
   const [playing, setPlaying] = useState<string | null>(null)
   return (
     <>
-      <PageHero crumbs={[{ label: 'Learn' }, { label: 'Videos' }]} eyebrow="Videos" title={<>Hear it from our <em className="text-plum">specialists</em>.</>}
+      <PageHero crumbs={[{ label: 'Journeys', to: '/resources' }, { label: 'Videos' }]} eyebrow="Videos" title={<>Hear it from our <em className="text-plum">specialists</em>.</>}
         text="Awareness talks that demystify infertility: its causes, the treatment options, and why seeking help early matters." />
       <section className="section">
         <div className="container-x grid gap-8 md:grid-cols-2">
@@ -136,7 +136,7 @@ export function Videos() {
         <div className="container-x grid gap-10 lg:grid-cols-2">
           <Reveal>
             <p className="eyebrow mb-4">Male fertility</p>
-            <h2 className="h2">What is the DFI test?</h2>
+            <h2 className="h2 text-balance">What is the <em className="text-plum">DFI test</em>?</h2>
             <p className="mt-5 text-lg text-ink-2">The DNA Fragmentation Index measures the percentage of sperm with damaged or fragmented DNA, going beyond standard count, motility and morphology. Meena IVF offers DFI testing as part of comprehensive male infertility assessment.</p>
             <p className="mt-6 font-semibold">Recommended for:</p>
             <ul className="mt-3 space-y-2 text-ink-2">
@@ -178,7 +178,7 @@ export function Events() {
   }, [open, list.length])
   return (
     <>
-      <PageHero crumbs={[{ label: 'Learn' }, { label: 'Events & gallery' }]} eyebrow="Events & gallery" title={<>Moments that bring care <em className="text-plum">closer</em>.</>}
+      <PageHero crumbs={[{ label: 'Journeys', to: '/resources' }, { label: 'Events & gallery' }]} eyebrow="Events & gallery" title={<>Moments that bring care <em className="text-plum">closer</em>.</>}
         text="Partnerships, free consultation programmes and celebrations with the families and communities we serve." />
       <section className="section">
         <div className="container-x">
@@ -226,7 +226,7 @@ export function Faq() {
   const list = useMemo(() => faqs.filter((f) => (c === 'All' || f.cat === c) && (f.q + f.a).toLowerCase().includes(q.toLowerCase().trim())), [c, q])
   return (
     <>
-      <PageHero crumbs={[{ label: 'Learn' }, { label: 'FAQ' }]} eyebrow="Frequently asked questions" title={<>Your questions, answered with <em className="text-plum">care</em>.</>}
+      <PageHero crumbs={[{ label: 'Journeys', to: '/resources' }, { label: 'FAQ' }]} eyebrow="Frequently asked questions" title={<>Your questions, answered with <em className="text-plum">care</em>.</>}
         text="The most common questions about infertility, IVF, IUI, consultations, tests and treatment support." />
       <section className="section">
         <div className="container-x grid gap-10 lg:grid-cols-[280px_1fr] lg:gap-16">

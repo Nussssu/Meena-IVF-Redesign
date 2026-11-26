@@ -33,13 +33,11 @@ export const waLink = (text = 'Hello Meena IVF, I would like to know more about 
 
 export const nav = [
   { label: 'Treatments', to: '/treatments', mega: true },
-  { label: 'Meet our team', to: '/team' },
   {
     label: 'About', to: '/about', children: [
       { label: 'About Meena IVF', to: '/about', desc: 'Our mission, leadership and story' },
       { label: 'Why Meena', to: '/why-meena', desc: 'What makes our care different' },
       { label: 'Our team', to: '/team', desc: 'The people behind every journey' },
-      { label: 'Careers', to: '/careers', desc: 'Join the Meena family' },
     ],
   },
   {
@@ -49,13 +47,7 @@ export const nav = [
       { label: 'Cumilla OPD', to: '/centres/cumilla', desc: 'Monthly OPD · 2nd Tuesday' },
     ],
   },
-  { label: 'Stories', to: '/stories' },
-  {
-    label: 'Learn', to: '/blog', children: [
-      { label: 'Fertility blog', to: '/blog', desc: 'Doctor-informed articles in Bangla' },
-      { label: 'Videos', to: '/videos', desc: 'Talks from our specialists' },
-      { label: 'Events & gallery', to: '/events', desc: 'Camps, MOUs and special moments' },
-      { label: 'FAQ', to: '/faq', desc: 'Your questions, answered with care' },
-    ],
-  },
+  { label: 'Blog', to: '/blog' },
+  { label: 'Journeys', to: '/resources' },
+  { label: 'Careers', to: '/careers' },
 ] as const
