@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion, useScroll, useTransform, animate } from 'motion/react'
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight, Mail } from 'lucide-react'
 import { MOTHER_BABY } from './motherBaby'
 
 /** Short label on phones, full label from 640px. */
@@ -10,36 +11,156 @@ export function RL({ short, long }: { short: string; long: string }) {
 }
 
 /** Prev/next arrows for a phone swipe slider (.m-slider). Place it right after the slider: it moves the element just before
-    it by one card per tap, and fades an arrow when the slider is at its start/end. Phones only (hidden from 768px). */
-export function SliderArrows({ className = '', label = 'cards' }: { className?: string; label?: string }) {
+    it by one card per tap, and fades an arrow when the slider is at its start/end. Phones only (hidden from 768px).
+    The arrows sit on the section title's line, at the right (see findTitle), and centred dots, one per card, go below it;
+    `below` keeps the older layout: arrows under the slider and no dots (Why Meena's "How it works").
+    `middle`: no arrow row above; instead the arrows float on both sides over the middle of the cards' photo (or the card,
+    if it has no photo), each one showing only while there is more to see that way; the dots stay below. */
+/** The section title for a slider: the nearest h2 before it, looking at its earlier siblings and then its ancestors'
+    earlier siblings, up to its <section>. h2s inside a link (a featured card's title) don't count. */
+function findTitle(slider: HTMLElement): HTMLElement | null {
+  const stop = slider.closest('section') ?? slider.closest('main')
+  let node: Element | null = slider
+  while (node && node !== stop && node !== document.body) {
+    for (let s = node.previousElementSibling; s; s = s.previousElementSibling) {
+      const hs = [...(s.matches('h2') ? [s] : s.querySelectorAll('h2'))].filter((h) => !h.closest('a'))
+      if (hs.length) return hs[hs.length - 1] as HTMLElement
+    }
+    node = node.parentElement
+  }
+  return null
+}
+
+export function SliderArrows({ className = '', label = 'cards', below = false, middle = false }: { className?: string; label?: string; below?: boolean; middle?: boolean }) {
   const ref = useRef<HTMLDivElement>(null)
   const [edge, setEdge] = useState({ start: true, end: false })
+  const [count, setCount] = useState(0)
+  const [active, setActive] = useState(0)
+  const [top, setTop] = useState<HTMLElement | null>(null)
+  const [float, setFloat] = useState(middle) // arrows floating over the cards' middle (vs. on the title's line)
   const slider = () => ref.current?.previousElementSibling as HTMLElement | null
+  const stepOf = (el: HTMLElement) => {
+    const kids = [...el.children] as HTMLElement[]
+    return kids.length > 1 ? kids[1].offsetLeft - kids[0].offsetLeft : el.clientWidth * 0.8
+  }
   useEffect(() => {
     const el = slider()
     if (!el) return
     const on = () => {
       const max = el.scrollWidth - el.clientWidth
-      setEdge({ start: el.scrollLeft <= 2, end: max <= 2 || el.scrollLeft >= max - 2 })
+      const end = max <= 2 || el.scrollLeft >= max - 2
+      setEdge({ start: el.scrollLeft <= 2, end })
+      const n = el.children.length
+      setCount(n)
+      setActive(end && n > 0 ? n - 1 : Math.min(n - 1, Math.max(0, Math.round(el.scrollLeft / stepOf(el)))))
     }
     on()
     el.addEventListener('scroll', on, { passive: true })
     window.addEventListener('resize', on)
-    return () => { el.removeEventListener('scroll', on); window.removeEventListener('resize', on) }
-  }, [])
+    let holder: HTMLDivElement | null = null
+    let unMiddle = () => {}
+    // default: the arrows sit on the section title's last line, at the right (no row of their own). The title is the
+    // nearest h2 before the slider in its section (not one inside a card link); with no such title they float in the middle.
+    const title = !below && !middle ? findTitle(el) : null
+    setFloat(!below && (middle || !title))
+    if (title && title.parentElement) {
+      const parent = title.parentElement
+      const oldPos = parent.style.position
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative'
+      // keeps the title's text clear of the arrows on phones; a centred title gets a smaller pad on both sides, so it stays
+      // centred and its (shorter, centred) last line ends before the arrows
+      const pad = getComputedStyle(title).textAlign === 'center' ? 'max-md:px-12' : 'max-md:pr-24'
+      title.classList.add(pad)
+      holder = document.createElement('div')
+      holder.className = 'absolute z-10 flex gap-2 md:hidden'
+      parent.appendChild(holder)
+      const box = el.parentElement ?? el
+      const place = () => {
+        if (!holder) return
+        // y from offsets (a title still sliding in on reveal does not shift them); x: the right edge of the slider's box
+        const lh = parseFloat(getComputedStyle(title).lineHeight) || 40
+        holder.style.top = `${title.offsetTop + title.offsetHeight - lh / 2 - 20}px`
+        const cs = getComputedStyle(box)
+        const right = box.getBoundingClientRect().right - parseFloat(cs.paddingRight)
+        holder.style.left = `${right - parent.getBoundingClientRect().left - 88}px`
+      }
+      place()
+      const ro = new ResizeObserver(place)
+      ro.observe(title); ro.observe(box)
+      setTop(holder)
+      unMiddle = () => { ro.disconnect(); parent.style.position = oldPos; title.classList.remove(pad) }
+    } else if (!below && el.parentElement) {
+      // middle: an overlay in the slider's parent (made relative), placed level with the middle of the first card's photo
+      const parent = el.parentElement
+      const oldPos = parent.style.position
+      if (getComputedStyle(parent).position === 'static') parent.style.position = 'relative'
+      holder = document.createElement('div')
+      holder.className = 'pointer-events-none absolute inset-x-0 z-10 flex -translate-y-1/2 items-center justify-between px-4 md:hidden'
+      parent.appendChild(holder)
+      const place = () => {
+        const kid = el.children[0] as HTMLElement | undefined
+        if (!kid || !holder) return
+        const box = (kid.querySelector('img') as HTMLElement | null) ?? kid
+        // offsetTop (not getBoundingClientRect) so a card still sliding in on reveal does not shift the arrows
+        let y = box.offsetHeight / 2, n: HTMLElement | null = box
+        while (n && n !== parent) { y += n.offsetTop; n = n.offsetParent as HTMLElement | null }
+        holder.style.top = `${y}px`
+      }
+      place()
+      const ro = new ResizeObserver(place)
+      ro.observe(el)
+      setTop(holder)
+      unMiddle = () => { ro.disconnect(); parent.style.position = oldPos }
+    }
+    // cards added or removed later (e.g. a filter) update the dots
+    const mo = new MutationObserver(on)
+    mo.observe(el, { childList: true })
+    return () => { el.removeEventListener('scroll', on); window.removeEventListener('resize', on); mo.disconnect(); unMiddle(); holder?.remove(); setTop(null) }
+  }, [below, middle])
   const go = (dir: number) => {
     const el = slider()
     if (!el) return
-    const kids = [...el.children] as HTMLElement[]
-    const step = kids.length > 1 ? kids[1].offsetLeft - kids[0].offsetLeft : el.clientWidth * 0.8
-    el.scrollBy({ left: dir * step, behavior: 'smooth' })
+    el.scrollBy({ left: dir * stepOf(el), behavior: 'smooth' })
+  }
+  const goTo = (i: number) => {
+    const el = slider()
+    const kid = el?.children[i] as HTMLElement | undefined
+    if (!el || !kid) return
+    el.scrollTo({ left: kid.offsetLeft - (el.children[0] as HTMLElement).offsetLeft, behavior: 'smooth' })
   }
   const btn = 'grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white text-ink transition hover:border-plum hover:text-plum disabled:opacity-35 disabled:hover:border-ink/15 disabled:hover:text-ink'
-  return (
-    <div ref={ref} className={`mt-5 flex justify-end gap-2 md:hidden ${className}`}>
+  const arrows = (
+    <>
       <button type="button" onClick={() => go(-1)} disabled={edge.start} aria-label={`Previous ${label}`} className={btn}><ArrowLeft className="h-4 w-4" /></button>
       <button type="button" onClick={() => go(1)} disabled={edge.end} aria-label={`Next ${label}`} className={btn}><ArrowRight className="h-4 w-4" /></button>
-    </div>
+    </>
+  )
+  if (below) return <div ref={ref} className={`mt-5 flex justify-end gap-2 md:hidden ${className}`}>{arrows}</div>
+  return (
+    <>
+      {top && !float && createPortal(arrows, top)}
+      {top && float && createPortal(
+        <>
+          {[[-1, edge.start, 'Previous', ChevronLeft], [1, edge.end, 'Next', ChevronRight]].map(([dir, hide, word, Icon]) => {
+            const I = Icon as typeof ChevronLeft
+            // a plain white circle with a thin chevron, sitting on the peeking card near the screen edge
+            return (
+              <button key={word as string} type="button" onClick={() => go(dir as number)} aria-label={`${word} ${label}`} tabIndex={hide ? -1 : 0} aria-hidden={hide as boolean || undefined}
+                className={`grid h-9 w-9 place-items-center rounded-full bg-white text-ink shadow-[0_2px_8px_rgba(46,13,54,.12)] transition duration-300 ${hide ? 'pointer-events-none opacity-0' : 'pointer-events-auto opacity-100'}`}>
+                <I className="h-[18px] w-[18px]" strokeWidth={1.75} />
+              </button>
+            )
+          })}
+        </>, top)}
+      <div ref={ref} className={`mt-5 flex justify-center gap-1.5 md:hidden ${className}`}>
+        {count > 1 && Array.from({ length: count }, (_, i) => (
+          <button key={i} type="button" onClick={() => goTo(i)} aria-label={`Go to ${label} ${i + 1}`} aria-current={i === active || undefined}
+            className="grid h-6 place-items-center px-0.5">
+            <span className={`block h-2 rounded-full transition-all duration-300 ${i === active ? 'w-5 bg-plum' : 'w-2 bg-ink/20'}`} />
+          </button>
+        ))}
+      </div>
+    </>
   )
 }
 

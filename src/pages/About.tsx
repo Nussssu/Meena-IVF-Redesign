@@ -195,9 +195,10 @@ function FoundationSection() {
   return (
     // phones: a little less space above (under "What makes our care different")
     <section className="section bg-mist pt-10 max-md:!pb-10 max-md:!pt-4 md:pt-12 lg:pt-14">
-      <div className="container-x">
+      {/* phones: the header is left-aligned (the slider arrows sit on the title's line); tablet/desktop: centred */}
+      <div className="container-x max-md:[&>div:first-child]:items-start max-md:[&>div:first-child]:text-left">
         <SectionHeader align="center" eyebrow="Our foundation" title="Mission, vision and values" />
-        {/* phones: swipe slider moved by touch or the arrows below; tablet/desktop: three staggered cards */}
+        {/* phones: swipe slider moved by touch or the arrows by the title; tablet/desktop: three staggered cards */}
         <div className="m-slider grid gap-6 md:grid-cols-3 md:items-start md:pt-12">
           {FOUNDATION.map(([t, d, Icon], i) => (
             <Reveal key={t} delay={i * 0.08} className={i === 1 ? 'md:-mt-10' : i === 2 ? 'md:mt-6' : ''}>
@@ -365,7 +366,7 @@ export function WhyMeena() {
               </Reveal>
             ) })}
           </div>
-          <SliderArrows label="steps" />
+          <SliderArrows label="steps" middle />
         </div>
       </section>
       <CTABand />

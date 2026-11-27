@@ -187,7 +187,9 @@ function JourneySelector() {
           {journeys.map((x, i) => {
             const c = CARD[x.key] ?? { q: `${x.label}?`, sub: x.title, tag: x.label, to: '/treatments', img: x.image, pos: '50% 50%', Icon: Heart }
             return (
-              <Reveal as="li" key={x.key} delay={i * 0.06} className={`relative isolate ${i % 2 ? 'lg:mt-16' : ''}`}>
+              // will-change: the card is its own GPU layer, so the reveal slide and page scroll move it without repainting
+              // its big blurred glow every frame (that repaint is what made scrolling here judder on desktop)
+              <Reveal as="li" key={x.key} delay={i * 0.06} className={`relative isolate will-change-transform ${i % 2 ? 'lg:mt-16' : ''}`}>
                 {/* soft coloured glow beneath the card, taken from its own photo */}
                 <img src={c.img} alt="" aria-hidden loading="lazy"
                   className="pointer-events-none absolute inset-x-[6%] -bottom-8 top-[30%] -z-10 h-auto w-[88%] rounded-[3rem] object-cover opacity-55 blur-3xl saturate-150" />
@@ -269,7 +271,7 @@ function TreatmentIndex() {
             return (
               <Reveal as="li" key={it.slug} delay={i * 0.04} y={14} className="h-full">
                 <Link to={`/treatments/${t.slug}`} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)}
-                  className={`group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-4 ring-4 transition duration-500 ease-out sm:min-h-[17rem] sm:rounded-[1.5rem] sm:p-6 md:min-h-[19rem] md:p-7 ${on ? 'bg-gradient-to-br from-plum via-plum-700 to-plum-800 ring-white/70' : 'bg-white/75 ring-white backdrop-blur'}`}>
+                  className={`group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-4 ring-4 transition duration-500 ease-out sm:min-h-[17rem] sm:rounded-[1.5rem] sm:p-6 md:min-h-[19rem] md:p-7 ${on ? 'bg-gradient-to-br from-plum via-plum-700 to-plum-800 ring-white/70' : 'bg-white/75 ring-white'}`}>
                   {/* photo on the right, fading into the card on the left (phones: a band along the bottom, fading upwards) */}
                   <img src={it.img} alt="" loading="lazy"
                     className={`pointer-events-none absolute inset-x-0 bottom-0 h-[42%] w-full object-cover transition duration-700 [mask-image:linear-gradient(to_top,#000_35%,transparent)] group-hover:scale-[1.04] sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:h-full sm:w-[56%] sm:[mask-image:linear-gradient(to_left,#000_40%,transparent)] ${on ? 'opacity-90 mix-blend-luminosity' : 'opacity-85'}`} />
@@ -506,11 +508,41 @@ function SpecialistsCarousel() {
   const first = doctors[0].tint
   const archTint = first === 'blush' ? 'bg-blush' : first === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
   const scroll = (dir: number) => track.current?.scrollBy({ left: dir * (track.current.clientWidth * 0.8), behavior: 'smooth' })
+  // phones: which card is in view (for the dots) and whether the track is at its start/end (fades the top arrows)
+  const [active, setActive] = useState(0)
+  const [edge, setEdge] = useState({ start: true, end: false })
+  useEffect(() => {
+    const el = track.current
+    if (!el) return
+    const on = () => {
+      const kids = el.children as HTMLCollectionOf<HTMLElement>
+      const step = kids.length > 1 ? kids[1].offsetLeft - kids[0].offsetLeft : el.clientWidth
+      const max = el.scrollWidth - el.clientWidth
+      const end = max <= 2 || el.scrollLeft >= max - 2
+      setEdge({ start: el.scrollLeft <= 2, end })
+      setActive(end ? doctors.length - 1 : Math.min(doctors.length - 1, Math.round(el.scrollLeft / step)))
+    }
+    on()
+    el.addEventListener('scroll', on, { passive: true })
+    window.addEventListener('resize', on)
+    return () => { el.removeEventListener('scroll', on); window.removeEventListener('resize', on) }
+  }, [])
+  const goTo = (i: number) => {
+    const el = track.current
+    const kids = el?.children as HTMLCollectionOf<HTMLElement> | undefined
+    if (el && kids?.[i]) el.scrollTo({ left: kids[i].offsetLeft - kids[0].offsetLeft, behavior: 'smooth' })
+  }
+  const topBtn = 'grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum disabled:opacity-35 disabled:hover:border-ink/15 disabled:hover:text-ink'
   return (
     <section className="section bg-mist">
       <div className="container-x">
-        <div className="mb-10 md:mb-14">
+        {/* phones: prev/next arrows on the right, level with the heading */}
+        <div className="mb-10 max-md:flex max-md:items-end max-md:justify-between max-md:gap-4 md:mb-14">
           <Reveal className="min-w-0"><h2 className="h2 text-balance">Meet our <em className="text-plum">specialists</em></h2></Reveal>
+          <div className="flex shrink-0 gap-2 md:hidden">
+            <button type="button" onClick={() => scroll(-1)} disabled={edge.start} aria-label="Previous doctors" className={topBtn}><ArrowLeft className="h-4 w-4" /></button>
+            <button type="button" onClick={() => scroll(1)} disabled={edge.end} aria-label="Next doctors" className={topBtn}><ArrowRight className="h-4 w-4" /></button>
+          </div>
         </div>
       </div>
       {/* relative: keeps the hidden screen-reader stat labels (absolute) inside the track, otherwise they widen the page on phones.
@@ -543,8 +575,16 @@ function SpecialistsCarousel() {
         ))}
         <div className="w-px shrink-0" />
       </div>
-      {/* prev/next arrows under the cards, on the right */}
-      <div className="container-x mt-5 flex justify-end gap-2">
+      {/* phones: centred dots under the cards, one per doctor */}
+      <div className="container-x mt-5 flex justify-center gap-1.5 md:hidden">
+        {doctors.map((d, i) => (
+          <button key={d.slug} type="button" onClick={() => goTo(i)} aria-label={`Go to ${d.name}`} aria-current={i === active || undefined} className="grid h-6 place-items-center px-0.5">
+            <span className={`block h-2 rounded-full transition-all duration-300 ${i === active ? 'w-5 bg-plum' : 'w-2 bg-ink/20'}`} />
+          </button>
+        ))}
+      </div>
+      {/* tablet: prev/next arrows under the cards, on the right */}
+      <div className="container-x mt-5 hidden justify-end gap-2 md:flex">
         <button onClick={() => scroll(-1)} aria-label="Previous doctors" className="grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowLeft className="h-4 w-4" /></button>
         <button onClick={() => scroll(1)} aria-label="Next doctors" className="grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowRight className="h-4 w-4" /></button>
       </div>
@@ -840,9 +880,11 @@ function ReviewMarquee() {
   }
   const endDrag = () => { drag.current = null; setDragging(false) }
 
+  const arrowBtn = 'grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum'
+
   return (
     <>
-    {/* phones: no mouse hover-pause or mouse drag; the reviews drift on their own and move with the arrows below */}
+    {/* phones: no mouse hover-pause or mouse drag, and no arrows or dots; the reviews drift on their own and swipe by touch */}
     <div ref={track}
       {...(phoneReviews ? {} : {
         onMouseEnter: () => { hovering.current = true }, onMouseLeave: () => { hovering.current = false; endDrag() },
@@ -865,10 +907,10 @@ function ReviewMarquee() {
         ))}
       </ul>
     </div>
-    {/* Left / right controls, so visitors can see the reviews can be moved by hand */}
-    <div className="container-x mt-6 flex justify-end gap-2">
-      <button type="button" onClick={() => move(-1)} aria-label="Previous reviews" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowLeft className="h-5 w-5" /></button>
-      <button type="button" onClick={() => move(1)} aria-label="Next reviews" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowRight className="h-5 w-5" /></button>
+    {/* tablet/desktop: left / right controls under the reviews, so visitors can see the reviews can be moved by hand */}
+    <div className="container-x mt-6 hidden justify-end gap-2 md:flex">
+      <button type="button" onClick={() => move(-1)} aria-label="Previous reviews" className={arrowBtn}><ArrowLeft className="h-5 w-5" /></button>
+      <button type="button" onClick={() => move(1)} aria-label="Next reviews" className={arrowBtn}><ArrowRight className="h-5 w-5" /></button>
     </div>
     </>
   )
@@ -1026,7 +1068,7 @@ function Learn() {
             </Reveal>
           ))}
         </div>
-        <SliderArrows label="articles" />
+        <SliderArrows label="articles" middle />
       </div>
     </section>
   )
