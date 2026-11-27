@@ -8,7 +8,6 @@ import NotFound from './pages/NotFound'
 const named = <T, K extends keyof T>(f: () => Promise<T>, k: K) => lazy(() => f().then((m) => ({ default: m[k] as unknown as ComponentType })))
 const TreatmentsHub = named(() => import('./pages/Treatments'), 'TreatmentsHub')
 const TreatmentDetail = named(() => import('./pages/Treatments'), 'TreatmentDetail')
-const DoctorsIndex = named(() => import('./pages/Doctors'), 'DoctorsIndex')
 const DoctorProfile = named(() => import('./pages/Doctors'), 'DoctorProfile')
 const About = named(() => import('./pages/About'), 'About')
 const WhyMeena = named(() => import('./pages/About'), 'WhyMeena')
@@ -28,7 +27,7 @@ const Contact = lazy(() => import('./pages/Contact'))
 // Old WordPress URLs → new routes (so existing links and search results keep working)
 const legacy: Record<string, string> = {
   'about-us': '/about', 'why-meena-ivf': '/why-meena', 'why-meena-2': '/why-meena', 'meet-our-team': '/team', 'career': '/careers',
-  'our-doctors': '/doctors', 'our-center': '/centres/banani', 'locations': '/centres/banani', 'banani': '/centres/banani', 'khulna-opd-camp': '/centres/khulna', 'cumilla-opd': '/centres/cumilla',
+  'our-center': '/centres/banani', 'locations': '/centres/banani', 'banani': '/centres/banani', 'khulna-opd-camp': '/centres/khulna', 'cumilla-opd': '/centres/cumilla',
   'success-story': '/stories', 'patient-review': '/stories', 'fertility-blog': '/blog', 'doctors-speak': '/videos', 'gallery': '/events',
   'book-appointment': '/book', 'contact-us-2': '/contact', 'folliculometry-2': '/treatments/folliculometry',
   'dr-lubna-yasmin': '/doctors/dr-lubna-yasmin', 'dr-natasha-tiluttoma-aleem': '/doctors/dr-natasha-tiluttoma-aleem', 'dr-mosammat-bilkis-parvin': '/doctors/prof-dr-mosammat-bilkis-parvin',
@@ -45,7 +44,6 @@ const router = createBrowserRouter([
       { path: '/', element: <Home /> },
       { path: '/treatments', element: <TreatmentsHub /> },
       { path: '/treatments/:slug', element: <TreatmentDetail /> },
-      { path: '/doctors', element: <DoctorsIndex /> },
       { path: '/doctors/:slug', element: <DoctorProfile /> },
       { path: '/about', element: <About /> },
       { path: '/why-meena', element: <WhyMeena /> },

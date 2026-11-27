@@ -474,7 +474,8 @@ export function StepAnimation({ slug, steps }: { slug: string; steps: { title: s
           <div className="mt-4 grid flex-1 items-center gap-4 md:mt-6 md:grid-cols-[1.1fr_.9fr] md:gap-14">
             {/* Animation: no box, it simply appears for the current step, on a soft glow */}
             <div className="relative mx-auto aspect-[5/3] w-full max-w-[46rem] max-h-[22svh] md:max-h-[62svh]">
-              <div aria-hidden className="pointer-events-none absolute inset-[-8%] rounded-full bg-[radial-gradient(closest-side,rgba(123,107,176,.16),rgba(235,227,244,.5)_55%,transparent)]" />
+              {/* phones: no sideways spread, so the glow doesn't poke past the screen edge */}
+              <div aria-hidden className="pointer-events-none absolute inset-x-0 inset-y-[-8%] rounded-full md:inset-[-8%] bg-[radial-gradient(closest-side,rgba(123,107,176,.16),rgba(235,227,244,.5)_55%,transparent)]" />
               <AnimatePresence mode="wait">
                 <motion.span key={active} aria-hidden className="pointer-events-none absolute -left-2 -top-6 select-none font-display text-[7rem] leading-none text-plum/[.07] md:-top-10 md:text-[11rem]"
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.45 }}>{String(active + 1).padStart(2, '0')}</motion.span>
@@ -504,7 +505,7 @@ export function StepAnimation({ slug, steps }: { slug: string; steps: { title: s
                         <AnimatePresence initial={false}>
                           {i === active && (
                             <motion.span key="d" className="block overflow-hidden text-ink-2" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}>
-                              <span className="block text-pretty pt-1 text-[0.9375rem] leading-relaxed md:pt-[clamp(0.25rem,0.8vh,0.5rem)] md:text-[clamp(0.9375rem,2vh,1.125rem)]">{s.text}</span>
+                              <span className="block text-pretty pt-1 text-[0.9375rem] leading-relaxed max-md:text-justify max-md:[hyphens:auto] md:pt-[clamp(0.25rem,0.8vh,0.5rem)] md:text-[clamp(0.9375rem,2vh,1.125rem)]">{s.text}</span>
                             </motion.span>
                           )}
                         </AnimatePresence>

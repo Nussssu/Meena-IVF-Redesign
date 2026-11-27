@@ -69,6 +69,38 @@
   .no-scrollbar { scrollbar-width: none; }
 }
 
+/* Phones only (< 768px): a small group of cards becomes a swipe slider. Each card takes 82% of the width so the next one
+   peeks in; cards snap into place and the row bleeds to the screen edges. Tablet/desktop keep their grid. */
+@media (max-width: 767.98px) {
+  .m-slider {
+    display: flex !important; gap: .875rem; overflow-x: auto; overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory; scroll-padding-inline: 1.25rem; scrollbar-width: none;
+    margin-inline: -1.25rem; padding-inline: 1.25rem;
+    /* room for card shadows (a scrolling row clips them), cancelled out so the spacing around it stays the same */
+    padding-block: .5rem 1.5rem; margin-block: -.5rem -1.5rem;
+  }
+  .m-slider::-webkit-scrollbar { display: none; }
+  .m-slider > * { flex: 0 0 82%; min-width: 0; scroll-snap-align: start; }
+  .patient-reviews-slider > * { flex-basis: 92%; }
+}
+
+/* Booking confirmation printout: only the confirmation card is printed, as a clean A4 page.
+   Scoped with :has() so printing any other page is unchanged. */
+@media print {
+  @page { size: A4; margin: 16mm; }
+  body:has(#booking-print) { background: #fff !important; }
+  body:has(#booking-print) * { visibility: hidden; }
+  body:has(#booking-print) #booking-print,
+  body:has(#booking-print) #booking-print * { visibility: visible; }
+  body:has(#booking-print) #booking-print {
+    position: absolute; left: 0; top: 0; width: 100%;
+    margin: 0; padding: 0; border: 0; box-shadow: none; background: #fff;
+    transform: none !important; opacity: 1 !important;
+  }
+  body:has(#booking-print) .grain::after { display: none; }
+  #booking-print, #booking-print * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

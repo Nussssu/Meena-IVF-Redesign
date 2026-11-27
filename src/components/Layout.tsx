@@ -35,7 +35,7 @@ function Header() {
   const loc = useLocation()
   const closeTimer = useRef<number | undefined>(undefined)
   // Pages that open on a dark photo hero: keep the transparent header's text light until it gets its solid background
-  const onDark = (/^\/(centres|treatments)\/[^/]+/.test(loc.pathname) || ['/blog', '/about', '/why-meena', '/team'].includes(loc.pathname)) && !(scrolled || open || mobile)
+  const onDark = (/^\/(centres|treatments)\/[^/]+/.test(loc.pathname) || ['/blog', '/about', '/why-meena', '/team', '/contact'].includes(loc.pathname)) && !(scrolled || open || mobile)
   // The home hero is a photo with both light and dark areas behind the menu: give the menu a soft light veil so dark text always reads
   const onPhoto = loc.pathname === '/' && !(scrolled || open || mobile)
 
@@ -57,7 +57,7 @@ function Header() {
       <motion.div aria-hidden style={{ scaleX: scrollYProgress }} className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-plum/70" />
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-3 focus:z-50 focus:rounded-full focus:bg-plum focus:px-4 focus:py-2 focus:text-white">Skip to content</a>
       <div className="container-x flex h-[72px] items-center justify-between gap-6">
-        <Link to="/" aria-label="Meena IVF home" className="flex min-h-[2.75rem] shrink-0 items-center"><Logo light={onDark} className="h-7 md:h-8" /></Link>
+        <Link to="/" state={{ logo: true }} aria-label="Meena IVF home" className="flex min-h-[2.75rem] shrink-0 items-center"><Logo light={onDark} className="h-7 md:h-8" /></Link>
 
         <nav aria-label="Main" className="hidden lg:block">
           <ul className="flex items-center gap-0.5 xl:gap-1">
@@ -100,7 +100,6 @@ function Header() {
         </nav>
 
         <div className="flex items-center gap-2">
-          <a href={site.hotlineHref} className={`hidden items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-[0.9375rem] font-semibold ${onDark ? 'text-paper hover:text-lilac' : 'text-ink hover:text-plum'} 2xl:flex`}><Phone className="h-4 w-4" />{site.hotline}</a>
           <Link to="/book" className="btn-primary hidden !min-h-[44px] whitespace-nowrap !px-5 sm:inline-flex"><span>Book<span className="hidden xl:inline"> appointment</span></span></Link>
           <button ref={toggleRef} className="group grid h-11 w-11 place-items-center rounded-full bg-plum-900 text-paper shadow-soft transition hover:bg-plum lg:hidden" aria-label="Open menu" aria-expanded={mobile} aria-controls="mobile-drawer" onClick={() => setMobile(true)} data-mobile-toggle>
             <MenuIcon />
@@ -212,7 +211,6 @@ function MobileDrawer({ open, onClose }: { open: boolean; onClose: () => void })
               ) : (
                 <Link key={n.label} to={n.to} onClick={onClose} className="flex min-h-[4rem] items-center justify-between border-b border-line font-display text-[1.6rem] hover:text-plum">{n.label}<ArrowUpRight className="h-5 w-5 text-muted" /></Link>
               ))}
-              <Link to="/contact" onClick={onClose} className="flex min-h-[4rem] items-center justify-between border-b border-line font-display text-[1.6rem] hover:text-plum">Contact<ArrowUpRight className="h-5 w-5 text-muted" /></Link>
             </nav>
             <div className="shrink-0 border-t border-line bg-white/70 px-5 pb-5 pt-4">
               <div className="btn-pair">
@@ -251,7 +249,7 @@ function MobileGroup({ title, children }: { title: string; children: React.React
 function Footer() {
   const cols = [
     { title: 'Treatments', links: [['IVF', '/treatments/ivf'], ['ICSI', '/treatments/icsi'], ['IUI', '/treatments/iui'], ['Egg freezing', '/treatments/egg-freezing'], ['TESA', '/treatments/tesa'], ['All treatments', '/treatments']] },
-    { title: 'Meena IVF', links: [['About us', '/about'], ['Why Meena', '/why-meena'], ['Our doctors', '/doctors'], ['Our team', '/team'], ['Centres', '/centres'], ['Careers', '/careers']] },
+    { title: 'Meena IVF', links: [['About us', '/about'], ['Why Meena', '/why-meena'], ['Our team', '/team'], ['Centres', '/centres'], ['Careers', '/careers']] },
     { title: 'Journeys', links: [['Patient stories', '/stories'], ['Fertility blog', '/blog'], ['Videos', '/videos'], ['Events & gallery', '/events'], ['FAQ', '/faq'], ['Contact', '/contact']] },
   ]
   return (
@@ -274,7 +272,8 @@ function Footer() {
           </div>
           <div className="grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-[1fr_1fr_1fr_1.5fr]">
             {cols.map((c) => (
-              <div key={c.title}>
+              // phones: the Journeys column is hidden (768px+ shows all columns)
+              <div key={c.title} className={c.title === 'Journeys' ? 'hidden md:block' : undefined}>
                 <p className="mb-4 text-eyebrow font-semibold uppercase text-lilac">{c.title}</p>
                 <ul className="lg:space-y-1">
                   {c.links.map(([l, to]) => <li key={to}><Link to={to} className="inline-flex min-h-[2.75rem] items-center text-paper/75 transition hover:text-white lg:min-h-[2rem]">{l}</Link></li>)}
@@ -294,7 +293,8 @@ function Footer() {
         </div>
         <div className="mt-16 flex flex-col gap-3 border-t border-white/10 pt-8 text-sm text-paper/50 md:flex-row md:justify-between">
           <p>© {new Date().getFullYear()} {site.legal} All rights reserved.</p>
-          <p>Images of patients are shared with their informed consent, for educational purposes.</p>
+          {/* hidden on phones (768px+ shows it) */}
+          <p className="hidden md:block">Images of patients are shared with their informed consent, for educational purposes.</p>
         </div>
       </div>
     </footer>
@@ -321,12 +321,15 @@ function FloatingWhatsApp() {
 }
 
 export default function Layout() {
-  const { pathname, hash } = useLocation()
+  const { pathname, hash, state, key } = useLocation()
+  // a click on the header logo replays the loading curtain and returns to the top, even when already on the landing page
+  const logoKey = (state as { logo?: boolean } | null)?.logo ? key : ''
+  // smooth page scrolling (card sliders are moved by touch or their arrows, not by the mouse wheel/drag)
   useEffect(() => { initSmoothScroll() }, [])
-  useEffect(() => { if (!hash) scrollToTarget(0, { immediate: true }) }, [pathname, hash])
+  useEffect(() => { if (!hash) scrollToTarget(0, { immediate: true }) }, [pathname, hash, logoKey])
   return (
     <>
-      <PageCurtain routeKey={pathname} />
+      <PageCurtain routeKey={pathname + logoKey} />
       <Header />
       <main id="main"><Suspense fallback={<div className="min-h-screen" />}><Outlet /></Suspense></main>
       <Footer />

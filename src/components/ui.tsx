@@ -1,12 +1,46 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useInView, useReducedMotion, useScroll, useTransform, animate } from 'motion/react'
-import { ArrowRight, ChevronDown, ChevronRight, Mail } from 'lucide-react'
+import { ArrowLeft, ArrowRight, ChevronDown, ChevronRight, Mail } from 'lucide-react'
 import { MOTHER_BABY } from './motherBaby'
 
 /** Short label on phones, full label from 640px. */
 export function RL({ short, long }: { short: string; long: string }) {
   return <><span className="sm:hidden">{short}</span><span className="hidden sm:inline">{long}</span></>
+}
+
+/** Prev/next arrows for a phone swipe slider (.m-slider). Place it right after the slider: it moves the element just before
+    it by one card per tap, and fades an arrow when the slider is at its start/end. Phones only (hidden from 768px). */
+export function SliderArrows({ className = '', label = 'cards' }: { className?: string; label?: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [edge, setEdge] = useState({ start: true, end: false })
+  const slider = () => ref.current?.previousElementSibling as HTMLElement | null
+  useEffect(() => {
+    const el = slider()
+    if (!el) return
+    const on = () => {
+      const max = el.scrollWidth - el.clientWidth
+      setEdge({ start: el.scrollLeft <= 2, end: max <= 2 || el.scrollLeft >= max - 2 })
+    }
+    on()
+    el.addEventListener('scroll', on, { passive: true })
+    window.addEventListener('resize', on)
+    return () => { el.removeEventListener('scroll', on); window.removeEventListener('resize', on) }
+  }, [])
+  const go = (dir: number) => {
+    const el = slider()
+    if (!el) return
+    const kids = [...el.children] as HTMLElement[]
+    const step = kids.length > 1 ? kids[1].offsetLeft - kids[0].offsetLeft : el.clientWidth * 0.8
+    el.scrollBy({ left: dir * step, behavior: 'smooth' })
+  }
+  const btn = 'grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white text-ink transition hover:border-plum hover:text-plum disabled:opacity-35 disabled:hover:border-ink/15 disabled:hover:text-ink'
+  return (
+    <div ref={ref} className={`mt-5 flex justify-end gap-2 md:hidden ${className}`}>
+      <button type="button" onClick={() => go(-1)} disabled={edge.start} aria-label={`Previous ${label}`} className={btn}><ArrowLeft className="h-4 w-4" /></button>
+      <button type="button" onClick={() => go(1)} disabled={edge.end} aria-label={`Next ${label}`} className={btn}><ArrowRight className="h-4 w-4" /></button>
+    </div>
+  )
 }
 
 export function useMeta(title: string, description?: string) {
@@ -94,7 +128,7 @@ export function Breadcrumbs({ items }: { items: { label: string; to?: string }[]
 }
 
 /* Photo hero with a strong colour wash on the left, title + tagline, breadcrumb trail, and a curved bottom edge */
-export function CurveHero({ image, video, alt = '', eyebrow, title, subtitle, crumbs, children }: { image: string; video?: string; alt?: string; eyebrow?: string; title: ReactNode; subtitle?: ReactNode; crumbs?: { label: string; to?: string }[]; children?: ReactNode }) {
+export function CurveHero({ image, video, alt = '', eyebrow, title, subtitle, crumbs, children, symmetric }: { image: string; video?: string; alt?: string; eyebrow?: string; title: ReactNode; subtitle?: ReactNode; crumbs?: { label: string; to?: string }[]; children?: ReactNode; symmetric?: boolean }) {
   return (
     <section className="relative isolate overflow-hidden bg-plum-900">
       {/* a video (when given) plays in place of the photo; the photo is its poster */}
@@ -125,7 +159,8 @@ export function CurveHero({ image, video, alt = '', eyebrow, title, subtitle, cr
       </div>
       {/* curved bottom edge, in the page background colour */}
       <svg aria-hidden viewBox="0 0 1440 80" preserveAspectRatio="none" className="absolute inset-x-0 bottom-[-1px] h-10 w-full md:h-16 lg:h-20">
-        <path d="M0 40 Q700 112 1440 0 L1440 80 L0 80 Z" className="fill-mist" />
+        {/* symmetric: the right side mirrors the left (both edges start halfway down), so a centred card meets the curve evenly */}
+        <path d={symmetric ? 'M0 40 Q720 120 1440 40 L1440 80 L0 80 Z' : 'M0 40 Q700 112 1440 0 L1440 80 L0 80 Z'} className="fill-mist" />
       </svg>
     </section>
   )

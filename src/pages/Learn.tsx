@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Play, Search, X } from 'lucide-react'
-import { Accordion, CTABand, PageHero, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { Accordion, CTABand, PageHero, Reveal, SectionHeader, SliderArrows, useMeta } from '../components/ui'
 import { TestimonialCard } from '../components/cards'
 import { events, eventTypes, faqs, testimonials, videos } from '../data/content'
 import blog from '../data/blog.json'
@@ -38,7 +38,8 @@ export function Blog() {
             </Link>
           </Reveal>
         )}
-        <div className="mt-10 grid gap-8 md:grid-cols-3">
+        {/* phones: swipe slider; tablet/desktop: three across */}
+        <div className="m-slider mt-10 grid gap-8 md:grid-cols-3">
           {rest.map((p, i) => (
             <Reveal key={p.slug} delay={i * 0.06}>
               <Link to={`/blog/${p.slug}`} className="group block">
@@ -49,6 +50,7 @@ export function Blog() {
             </Reveal>
           ))}
         </div>
+        <SliderArrows label="articles" />
       </div>
       <CTABand title="Confused about symptoms, tests or treatment?" text="Talk to our specialists about your reports or treatment plan. The right guidance at the right time helps you decide with confidence." />
     </>
@@ -77,7 +79,8 @@ export function BlogPost() {
           <p className="mt-5 text-muted">{p.author} · {fmtDate(p.date)} · {p.readMinutes} min read</p>
         </header>
         <div className="container-x mt-10 max-w-5xl"><img src={p.image} alt="" className="w-full rounded-panel" /></div>
-        <div lang="bn" className="container-x mt-12 max-w-5xl space-y-6 font-bn text-[1.1875rem] leading-[1.9] text-ink-2">
+        {/* article body (Bangla): justified */}
+        <div lang="bn" className="container-x mt-12 max-w-5xl space-y-6 text-justify font-bn text-[1.1875rem] leading-[1.9] text-ink-2">
           {p.body.map((para, i) => <p key={i} className={i === 0 ? 'text-[1.3125rem] text-ink' : ''}>{para}</p>)}
         </div>
         <div className="container-x mt-14 max-w-5xl">
@@ -91,7 +94,8 @@ export function BlogPost() {
       <section className="section bg-white">
         <div className="container-x">
           <h2 className="h2 mb-10 text-balance">Keep <em className="text-plum">reading</em></h2>
-          <div className="grid gap-8 md:grid-cols-3">
+          {/* phones: swipe slider; tablet/desktop: three across */}
+          <div className="m-slider grid gap-8 md:grid-cols-3">
             {others.map((o) => (
               <Link key={o.slug} to={`/blog/${o.slug}`} className="group block">
                 <div className="aspect-[16/10] overflow-hidden rounded-card bg-mist"><img src={o.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /></div>
@@ -99,6 +103,7 @@ export function BlogPost() {
               </Link>
             ))}
           </div>
+          <SliderArrows label="articles" />
         </div>
       </section>
     </>
@@ -182,9 +187,11 @@ export function Events() {
         text="Partnerships, free consultation programmes and celebrations with the families and communities we serve." />
       <section className="section">
         <div className="container-x">
-          <div className="mb-14 grid gap-4 md:grid-cols-3">
+          {/* phones: swipe slider; tablet/desktop: three across */}
+          <div className="m-slider grid gap-4 md:mb-14 md:grid-cols-3">
             {eventTypes.map((t, i) => <Reveal key={t.title} delay={i * 0.06} className="card p-7"><h2 className="font-display text-2xl">{t.title}</h2><p className="mt-3 text-ink-2">{t.text}</p></Reveal>)}
           </div>
+          <SliderArrows className="mb-14" />
           <div role="group" aria-label="Filter gallery" className="no-scrollbar mb-8 flex gap-2 overflow-x-auto">
             {cats.map((x) => <button key={x} onClick={() => setC(x)} aria-pressed={c === x} className={`whitespace-nowrap rounded-full border inline-flex min-h-[2.75rem] items-center px-4 text-sm font-semibold transition ${c === x ? 'border-plum bg-plum text-white' : 'border-line bg-white text-ink-2'}`}>{x}</button>)}
           </div>
@@ -281,7 +288,9 @@ export function Stories() {
       <section className="section bg-white">
         <div className="container-x">
           <SectionHeader eyebrow="In their words" title="What families say" />
-          <div className="grid gap-5 md:grid-cols-2">{testimonials.map((t, i) => <Reveal key={t.name} delay={(i % 2) * 0.06}><TestimonialCard t={t} /></Reveal>)}</div>
+          {/* phones: swipe slider; tablet/desktop: two across */}
+          <div className="m-slider grid gap-5 md:grid-cols-2">{testimonials.map((t, i) => <Reveal key={t.name} delay={(i % 2) * 0.06} className="[&>*]:h-full"><TestimonialCard t={t} /></Reveal>)}</div>
+          <SliderArrows label="stories" />
         </div>
       </section>
       <section className="section">

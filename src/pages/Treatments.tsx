@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useLocation, useParams } from 'react-router-dom'
 import { ArrowUpRight, CalendarCheck, Check, Phone } from 'lucide-react'
-import { Accordion, CTABand, CurveHero, PageHero, RL, Reveal, SectionHeader, TwoTone, useMeta } from '../components/ui'
+import { Accordion, CTABand, CurveHero, PageHero, RL, Reveal, SectionHeader, SliderArrows, TwoTone, useMeta } from '../components/ui'
 import { TodayBadge, TreatmentCard } from '../components/cards'
 import { StepAnimation } from '../components/StepAnimation'
 import { byGroup, groups, treatmentBySlug } from '../data/treatments'
@@ -53,9 +53,11 @@ export function TreatmentsHub() {
                 <h2 className="h2 mt-3 text-balance"><TwoTone text={g.title} /></h2>
                 <p className="mt-3 text-ink-2">{g.blurb}</p>
               </Reveal>
-              <div className="grid gap-4 md:grid-cols-3">
-                {byGroup(g.key).map((t, i) => <Reveal key={t.slug} delay={i * 0.06}><TreatmentCard t={t} index={i} /></Reveal>)}
+              {/* phones: swipe slider (m-slider); tablet/desktop: three across */}
+              <div className="m-slider grid gap-4 md:grid-cols-3">
+                {byGroup(g.key).map((t, i) => <Reveal key={t.slug} delay={i * 0.06} className="[&>*]:h-full"><TreatmentCard t={t} index={i} /></Reveal>)}
               </div>
+              <SliderArrows label="treatments" />
             </div>
           </section>
         ))}
@@ -102,7 +104,8 @@ export function TreatmentDetail() {
         <article className="min-w-0">
           <Reveal id="in-short" className="">
             <p className="eyebrow mb-4">In short</p>
-            <div className="space-y-5 text-[1.125rem] leading-[1.75] text-ink-2">
+            {/* phones: justified (hyphenated so narrow lines don't open wide gaps); 768px+ stays left-aligned */}
+            <div className="space-y-5 text-[1.125rem] leading-[1.75] text-ink-2 max-md:text-justify max-md:[hyphens:auto]">
               {t.intro.map((p, i) => <p key={i} className={i === 0 ? 'font-display text-[1.45rem] leading-snug text-ink' : ''}>{p}</p>)}
             </div>
           </Reveal>
@@ -120,7 +123,8 @@ export function TreatmentDetail() {
           </Reveal>
         </article>
 
-        <aside className="lg:sticky lg:top-28 lg:self-start">
+        {/* "Talk to a specialist" card: hidden on phones (768px+ shows it) */}
+        <aside className="hidden md:block lg:sticky lg:top-28 lg:self-start">
           <div className="card p-6 shadow-soft">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-lilac text-plum"><CalendarCheck className="h-5 w-5" /></span>
             <p className="mt-5 font-display text-2xl leading-tight">Talk to a specialist about {t.name}.</p>
@@ -172,24 +176,44 @@ export function TreatmentDetail() {
         <section className="section bg-white">
           <div className="container-x">
             <SectionHeader eyebrow="Your specialists" title={`Consultants for ${t.name}`} />
-            <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {/* phones: swipe slider (next card peeks in) when there are two or more specialists; a single card stays a
+                normal full-width card. Tablet/desktop: grid */}
+            <div className={`${docs.length > 1 ? 'm-slider ' : ''}grid gap-8 sm:grid-cols-2 lg:grid-cols-4`}>
               {docs.map((d) => <Reveal key={d.slug}><SpecialistCard d={d} /></Reveal>)}
             </div>
+            {docs.length > 1 && <SliderArrows label="specialists" />}
           </div>
         </section>
       )}
       {supportTeam.length > 0 && (
-        <section className="section bg-blush/60">
+        // tablet/desktop: both sections are white, so drop this one's top padding to close the gap under "Your specialists"
+        <section className={`section bg-white max-md:bg-mist${docs.length > 0 ? ' md:pt-0 lg:pt-0' : ''}`}>
+          {/* phones: lavender background, members in a swipe slider with arrows; tablet/desktop: white background, grid of
+              cards in the same design as "Your specialists" above */}
           <div className="container-x">
             <SectionHeader eyebrow="Your support team" title="People who will guide you" />
-            <div className="grid grid-cols-2 gap-6 md:grid-cols-3">
+            <div className="m-slider grid grid-cols-2 gap-6 md:gap-8 lg:grid-cols-4">
               {supportTeam.map((m) => (
                 <div key={m.name}>
-                  <img src={`/img/${m.img}.webp`} alt={m.name} loading="lazy" className="aspect-[4/5] w-full rounded-card object-cover object-top" />
-                  <p className="mt-3 font-semibold">{m.name}</p><p className="text-sm text-muted">{m.role}</p>
+                  {/* phones */}
+                  <div className="md:hidden">
+                    <img src={`/img/${m.img}.webp`} alt={m.name} loading="lazy" className="aspect-[4/5] w-full rounded-card object-cover object-top" />
+                    <p className="mt-3 font-semibold">{m.name}</p><p className="text-sm text-muted">{m.role}</p>
+                  </div>
+                  {/* tablet/desktop: same card as SpecialistCard (lilac backdrop, arch behind the photo); the photos have a
+                      white background, so multiply lets the lilac and the arch show through it */}
+                  <Reveal className="group hidden md:block">
+                    <div className="relative aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-lilac">
+                      <div aria-hidden className="arch-full absolute inset-x-[13%] bottom-0 top-[5%] bg-white/55" />
+                      <img src={`/img/${m.img}.webp`} alt={m.name} loading="lazy" className="absolute inset-x-0 bottom-0 mx-auto h-[94%] w-auto object-contain object-bottom mix-blend-multiply transition duration-700 ease-out group-hover:scale-[1.03]" />
+                    </div>
+                    <p className="mt-4 text-xs font-semibold text-plum">{m.role}</p>
+                    <h3 className="mt-1.5 font-display text-[1.45rem] leading-tight">{m.name}</h3>
+                  </Reveal>
                 </div>
               ))}
             </div>
+            <SliderArrows label="team members" />
           </div>
         </section>
       )}

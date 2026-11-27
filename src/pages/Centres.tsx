@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useReducedMotion } from 'motion/react'
 import { ArrowRight, CalendarDays, Check, Clock, MapPin, Pause, Phone, Play } from 'lucide-react'
-import { CTABand, CurveHero, Reveal, SectionHeader, useMeta } from '../components/ui'
+import { CTABand, CurveHero, Reveal, SectionHeader, SliderArrows, useMeta } from '../components/ui'
 import { centres, nextMonthly } from '../data/content'
 import { site } from '../data/site'
 import NotFound from './NotFound'
@@ -127,33 +127,41 @@ export function CentreDetail() {
         <section className="py-12 md:py-16">
           <div className="container-x">
             <SectionHeader eyebrow="Inside the centre" title={<>Take a look <em className="text-plum">around</em></>} />
-            <div className="grid gap-4 sm:grid-cols-3">
+            {/* phones: swipe slider (next photo peeks in); 768px+: three across */}
+            <div className="m-slider grid gap-4 sm:grid-cols-3">
               {c.gallery.map((g, i) => (
                 <Reveal key={g} delay={i * 0.06} className="overflow-hidden rounded-panel">
                   <img src={g} alt={`Inside ${c.name}`} loading="lazy" className="aspect-[3/4] w-full object-cover transition duration-700 hover:scale-105" />
                 </Reveal>
               ))}
             </div>
+            <SliderArrows label="photos" />
           </div>
         </section>
       )}
 
-      <section className={`bg-mist py-12 md:py-16 ${c.gallery ? '' : 'pt-0 md:pt-0 lg:pt-0'}`}>
+      {/* same spacing above for every centre (Khulna and Cumilla have no gallery, so this used to touch the section above) */}
+      <section className="bg-mist py-12 md:py-16">
         <div className="container-x">
           <SectionHeader eyebrow="Other centres" title="Closer to you, wherever you are." />
-          <div className="grid gap-5 md:grid-cols-2">
+          {/* phones: square photo cards (text on a plum fade at the bottom) in a swipe slider;
+              768px+: the original horizontal cards, two across */}
+          <div className="m-slider grid gap-5 md:grid-cols-2">
             {others.map((o) => (
-              <Link key={o.slug} to={`/centres/${o.slug}`} className="group card card-hover flex items-center gap-5 overflow-hidden p-3 pr-6">
-                <img src={o.image} alt="" loading="lazy" className="aspect-video w-44 shrink-0 rounded-card object-cover md:w-56" />
-                <div className="min-w-0">
-                  <p className="text-eyebrow font-semibold uppercase text-plum">{o.kind}</p>
-                  <h3 className="mt-1 font-display text-2xl">{o.name}</h3>
-                  <p className="mt-1 truncate text-sm text-muted">{o.schedule}</p>
+              <Link key={o.slug} to={`/centres/${o.slug}`}
+                className="group card card-hover relative flex overflow-hidden max-md:aspect-square max-md:flex-col max-md:justify-end max-md:border-0 md:items-center md:gap-5 md:p-3 md:pr-6">
+                <img src={o.image} alt="" loading="lazy" className="object-cover max-md:absolute max-md:inset-0 max-md:h-full max-md:w-full max-md:transition max-md:duration-700 max-md:group-hover:scale-105 md:aspect-video md:w-56 md:shrink-0 md:rounded-card" />
+                <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-plum-900/90 via-plum-900/25 to-transparent md:hidden" />
+                <div className="relative min-w-0 max-md:p-5 max-md:pr-16">
+                  <p className="text-eyebrow font-semibold uppercase text-plum max-md:text-lilac">{o.kind}</p>
+                  <h3 className="mt-1 font-display text-2xl max-md:!text-white">{o.name}</h3>
+                  <p className="mt-1 truncate text-sm text-muted max-md:text-white/80">{o.schedule}</p>
                 </div>
-                <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-plum transition group-hover:translate-x-1" />
+                <ArrowRight className="ml-auto h-5 w-5 shrink-0 text-plum transition group-hover:translate-x-1 max-md:absolute max-md:bottom-6 max-md:right-5 max-md:text-white" />
               </Link>
             ))}
           </div>
+          <SliderArrows label="centres" />
         </div>
       </section>
       <CTABand />

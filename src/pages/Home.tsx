@@ -1,9 +1,9 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { AnimatePresence, motion, useInView, useMotionValueEvent, useReducedMotion, useScroll, useTransform, type MotionValue } from 'motion/react'
 import { Activity, ArrowLeft, ArrowRight, ArrowUpRight, CalendarDays, ChartNoAxesColumnIncreasing, Clock, Egg, FlaskConical, GraduationCap, Heart, MapPin, Microscope, ScanLine, ShieldCheck, Snowflake, Stethoscope, Syringe, TestTube } from 'lucide-react'
-import { RL, Reveal, SectionHeader, WhatsAppIcon, useMeta } from '../components/ui'
-import { DoctorCard, TodayBadge } from '../components/cards'
+import { RL, Reveal, SectionHeader, SliderArrows, WhatsAppIcon, useMeta } from '../components/ui'
+import { TodayBadge } from '../components/cards'
 import { Magnetic, ScrollRibbon } from '../components/motion'
 import { Embryo, EMBRYO_LABELS } from '../components/Embryo'
 import { doctors, scheduleSummary } from '../data/doctors'
@@ -32,13 +32,16 @@ function Hero() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const imgY = useTransform(scrollYProgress, [0, 1], ['0%', reduce ? '0%' : '14%'])
   const textY = useTransform(scrollYProgress, [0, 1], ['0%', reduce ? '0%' : '-18%'])
+  // Phones get their own layout: the video sits behind the hero, filling its upper part (framed so both faces show),
+  // fading into lilac; the text sits on top in the lower part. Only one <video> is ever rendered.
+  const desktop = useMedia('(min-width: 768px)')
 
   return (
     <section ref={ref} className="grain relative overflow-hidden bg-mist">
       <div aria-hidden className="pointer-events-none absolute left-1/2 top-0 h-[56rem] w-[56rem] -translate-x-1/4 -translate-y-1/3 rounded-full bg-[radial-gradient(closest-side,rgba(235,227,244,.9),transparent)]" />
       <div className="relative">
-      {/* Background video — mother & baby sit on the right */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+      {/* Background video (tablet & desktop) — mother & baby sit on the right */}
+      {desktop && <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
         <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, ease: EASE }}
           className="absolute inset-0 overflow-hidden">
           <motion.video style={{ y: imgY }} src="/img/hero-video.mp4" poster="/img/hero-video-poster.webp"
@@ -47,8 +50,20 @@ function Hero() {
           {/* Soft wash behind the headline so the text reads clearly */}
           <div className="absolute inset-0 bg-mist/70 md:bg-transparent md:bg-[linear-gradient(to_right,rgba(243,238,246,.88)_0%,rgba(243,238,246,.7)_35%,rgba(243,238,246,0)_58%)]" />
         </motion.div>
-      </div>
-      <div className="container-x relative grid items-center gap-12 pb-16 pt-28 md:grid-cols-[1.05fr_.95fr] md:gap-8 md:pt-32 lg:pb-24 lg:pt-36">
+      </div>}
+      {/* Background video (phones) — fills the top ~64% of the hero behind the text, framed on both faces, fading into lilac */}
+      {!desktop && <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <motion.div initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, ease: EASE }}
+          className="absolute inset-x-0 top-0 h-[64%] overflow-hidden">
+          <motion.video style={{ y: imgY }} src="/img/hero-video.mp4" poster="/img/hero-video-poster.webp"
+            autoPlay muted loop playsInline preload="auto"
+            className="h-full w-full object-cover object-[36%_30%]" />
+          {/* light veil at the top for the header, and a long fade into the page colour at the bottom */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(243,238,246,.55)_0%,rgba(243,238,246,0)_22%,rgba(243,238,246,0)_45%,rgba(243,238,246,.85)_80%,#F3EEF6_100%)]" />
+        </motion.div>
+      </div>}
+      {/* phones: the hero fills the screen and the text sits at the bottom, over the video's fade (room left for the bottom bar) */}
+      <div className="container-x relative grid items-center gap-12 pb-16 pt-28 max-md:min-h-[100svh] max-md:content-end max-md:pb-28 md:grid-cols-[1.05fr_.95fr] md:gap-8 md:pt-32 lg:pb-24 lg:pt-36">
         <motion.div style={{ y: textY }}>
           <h1 className="display text-balance">
             {['Where', 'family', 'begins.'].map((w, i) => (
@@ -64,13 +79,16 @@ function Hero() {
           </motion.p>
           <motion.div initial={reduce ? false : { opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8, delay: 0.62 }} className="btn-pair mt-9">
             <Magnetic className="w-full sm:w-auto"><Link to="/book" className="btn-primary"><RL short="Book now" long="Book a consultation" /> <ArrowRight className="h-4 w-4" /></Link></Magnetic>
-            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-secondary"><WhatsAppIcon className="h-[1.125rem] w-[1.125rem] text-whatsapp" /> <RL short="WhatsApp" long="Ask on WhatsApp" /></a>
+            {/* always in the "hovered" look (lilac fill, darker border); on hover only the outline changes, to plum */}
+            <a href={waLink()} target="_blank" rel="noreferrer" className="btn-secondary !border-ink/40 !bg-mist hover:!border-plum"><WhatsAppIcon className="h-[1.125rem] w-[1.125rem] text-whatsapp" /> <RL short="WhatsApp" long="Ask on WhatsApp" /></a>
           </motion.div>
         </motion.div>
 
-        <div className="relative mx-auto w-full max-w-[34rem] md:mr-0">
-          <div aria-hidden className="aspect-[4/5] w-[88%]" />
-        </div>
+        {desktop && (
+          <div className="relative mx-auto w-full max-w-[34rem] md:mr-0">
+            <div aria-hidden className="aspect-[4/5] w-[88%]" />
+          </div>
+        )}
       </div>
       </div>
     </section>
@@ -149,13 +167,14 @@ function ManifestoWord({ p, i, n, children }: { p: MotionValue<number>; i: numbe
 
 /* ───────────────── 3. Journey selector ───────────────── */
 function JourneySelector() {
-  // Photo cards: a full photo, a small arrow tile in the corner (the only link) and a white caption bar with the question, a short line
-  // and an icon tile. Every other card sits lower on desktop, for a staggered look.
-  const CARD: Record<string, { q: string; sub: string; to: string; img: string; pos: string; Icon: typeof Heart }> = {
-    conceive: { q: 'Trying to conceive?', sub: 'A careful check for both partners', to: '/treatments/medical-history-evaluation', img: '/img/journey-card-conceive.webp', pos: '50% 50%', Icon: Stethoscope },
-    miscarriage: { q: 'After a miscarriage?', sub: 'Gentle care to find the cause', to: '/treatments/hysteroscopy', img: '/img/journey-card-miscarriage.webp', pos: '50% 50%', Icon: Heart },
-    preparing: { q: 'Preparing for treatment?', sub: 'A consultant beside every step', to: '/treatments/ivf', img: '/img/journey-card-preparing.webp', pos: '50% 50%', Icon: CalendarDays },
-    freezing: { q: 'Freezing your eggs?', sub: 'Protect your fertility for later', to: '/treatments/egg-freezing', img: '/img/journey-card-freezing.webp', pos: '50% 50%', Icon: Snowflake },
+  // Photo cards: the question and a short line sit centred at the top, the bottom of the photo melts into a soft blur
+  // with a small avatar + care name on the left and a white "More info" pill (the only link) on the right.
+  // A blurred copy of the photo glows beneath each card. Every other card sits lower on desktop, for a staggered look.
+  const CARD: Record<string, { q: string; sub: string; tag: string; to: string; img: string; pos: string; Icon: typeof Heart }> = {
+    conceive: { q: 'Trying to conceive?', sub: 'A careful check for both partners', tag: 'Fertility check', to: '/treatments/medical-history-evaluation', img: '/img/journey-card-conceive.webp', pos: '50% 50%', Icon: Stethoscope },
+    miscarriage: { q: 'After a miscarriage?', sub: 'Gentle care to find the cause', tag: 'Hysteroscopy', to: '/treatments/hysteroscopy', img: '/img/journey-card-miscarriage.webp', pos: '50% 50%', Icon: Heart },
+    preparing: { q: 'Preparing for treatment?', sub: 'A consultant beside every step', tag: 'IVF', to: '/treatments/ivf', img: '/img/journey-card-preparing.webp', pos: '50% 50%', Icon: CalendarDays },
+    freezing: { q: 'Freezing your eggs?', sub: 'Protect your fertility for later', tag: 'Egg freezing', to: '/treatments/egg-freezing', img: '/img/journey-card-freezing.webp', pos: '50% 50%', Icon: Snowflake },
   }
   return (
     <section className="section">
@@ -163,28 +182,51 @@ function JourneySelector() {
         <Reveal className="mb-10 text-center md:mb-14">
           <h2 className="h2">Where are you on your <em className="text-plum">journey</em>?</h2>
         </Reveal>
-        <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 lg:items-start">
+        {/* phones: two cards side by side (smaller type, icon and arrow); 640px+ unchanged */}
+        <ul className="grid grid-cols-2 gap-3 sm:gap-6 lg:grid-cols-4 lg:items-start">
           {journeys.map((x, i) => {
-            const c = CARD[x.key] ?? { q: `${x.label}?`, sub: x.title, to: '/treatments', img: x.image, pos: '50% 50%', Icon: Heart }
+            const c = CARD[x.key] ?? { q: `${x.label}?`, sub: x.title, tag: x.label, to: '/treatments', img: x.image, pos: '50% 50%', Icon: Heart }
             return (
-              <Reveal as="li" key={x.key} delay={i * 0.06} className={i % 2 ? 'lg:mt-16' : ''}>
-                <div className="group relative block aspect-[4/5] overflow-hidden rounded-[1.25rem] bg-mist shadow-[0_30px_60px_-34px_rgba(46,13,54,.45)]">
+              <Reveal as="li" key={x.key} delay={i * 0.06} className={`relative isolate ${i % 2 ? 'lg:mt-16' : ''}`}>
+                {/* soft coloured glow beneath the card, taken from its own photo */}
+                <img src={c.img} alt="" aria-hidden loading="lazy"
+                  className="pointer-events-none absolute inset-x-[6%] -bottom-8 top-[30%] -z-10 h-auto w-[88%] rounded-[3rem] object-cover opacity-55 blur-3xl saturate-150" />
+                <div className="group relative block aspect-[3/4] overflow-hidden rounded-[1.5rem] bg-mist shadow-[0_24px_50px_-30px_rgba(46,13,54,.35)] sm:aspect-[4/5] sm:rounded-[2.25rem]">
                   <img src={c.img} alt="" loading="lazy" style={{ objectPosition: c.pos }}
                     className="absolute inset-0 h-full w-full object-cover transition duration-700 ease-out group-hover:scale-[1.05]" />
-                  {/* only this arrow opens the page */}
-                  <Link to={c.to} aria-label={`${c.q} Explore care`}
-                    className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-lg bg-ink/25 text-white backdrop-blur-md transition duration-300 hover:bg-plum focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                    <ArrowUpRight className="h-5 w-5 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                  </Link>
-                  <span className="absolute inset-x-3 bottom-3 flex items-center gap-3 rounded-xl bg-white px-4 py-3.5 shadow-[0_10px_30px_-12px_rgba(46,13,54,.35)]">
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[1.0625rem] font-semibold text-ink">{c.q}</span>
-                      <span className="mt-0.5 block truncate text-[0.8125rem] text-ink-2">{c.sub}</span>
+                  {/* gentle shade at the top so the white title reads on light photos */}
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[58%] bg-gradient-to-b from-ink/65 via-ink/30 to-transparent sm:h-[42%] sm:from-ink/45 sm:via-ink/15" />
+                  {/* desktop: the same frosted-glass blur at the top, behind the question, so the white text reads on busy photos */}
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 hidden h-[36%] backdrop-blur-md [mask-image:linear-gradient(to_bottom,#000_40%,transparent)] md:block" />
+                  {/* phones: a light frosted blur at the very top, behind the question, fading out before the faces in the photos */}
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[22%] backdrop-blur-[3px] [mask-image:linear-gradient(to_bottom,#000_50%,transparent)] md:hidden" />
+                  {/* progressive blur that melts the bottom of the photo */}
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[24%] backdrop-blur-md [mask-image:linear-gradient(to_top,#000_30%,transparent)]" />
+                  <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-[26%] bg-gradient-to-t from-ink/25 to-transparent" />
+
+                  {/* phones: question and line left-aligned; 640px+: centred */}
+                  <div className="absolute inset-x-0 top-0 px-3 pt-4 text-left text-white sm:px-5 sm:pt-7 sm:text-center">
+                    <p className="text-balance text-[1.0625rem] font-light leading-[1.15] tracking-[-0.02em] [text-shadow:0_1px_12px_rgba(0,0,0,.18)] sm:text-[1.5rem] sm:leading-[1.1] md:text-[1.625rem]">{c.q}</p>
+                    <p className="mt-1.5 inline-flex items-center gap-1.5 text-[0.6875rem] font-medium leading-snug text-white [text-shadow:0_1px_8px_rgba(0,0,0,.35)] sm:mt-2 sm:text-[0.875rem] sm:font-normal sm:text-white/90 sm:[text-shadow:none]">
+                      <c.Icon className="hidden h-3.5 w-3.5 shrink-0 sm:block" strokeWidth={2} />
+                      <span>{c.sub}</span>
+                    </p>
+                  </div>
+
+                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-1.5 px-2.5 pb-2.5 sm:gap-2.5 sm:px-4 sm:pb-4 md:px-5 md:pb-5">
+                    <span className="hidden h-9 w-9 shrink-0 place-items-center rounded-full bg-white/25 text-white ring-1 ring-white/50 backdrop-blur-md sm:grid">
+                      <c.Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4" strokeWidth={1.8} />
                     </span>
-                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-plum-900 text-white">
-                      <c.Icon className="h-5 w-5" strokeWidth={1.8} />
+                    <span className="min-w-0 flex-1 leading-tight text-white">
+                      <span className="block truncate pl-1 text-[0.8125rem] font-medium [text-shadow:0_1px_8px_rgba(0,0,0,.25)] sm:pl-0 sm:text-[0.9375rem] sm:[text-shadow:none]">{c.tag}</span>
+                      <span className="hidden truncate text-[0.75rem] text-white/75 sm:block">Meena IVF</span>
                     </span>
-                  </span>
+                    {/* only this button opens the page */}
+                    <Link to={c.to} aria-label={`${c.q} More info about ${c.tag}`}
+                      className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-white text-ink shadow-[0_8px_20px_-10px_rgba(0,0,0,.35)] transition duration-300 hover:bg-plum sm:h-11 sm:w-11 sm:rounded-2xl hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                      <ArrowUpRight className="h-4 w-4 transition duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 sm:h-5 sm:w-5" strokeWidth={2} />
+                    </Link>
+                  </div>
                 </div>
               </Reveal>
             )
@@ -219,23 +261,24 @@ function TreatmentIndex() {
         <SectionHeader title={<>Wherever you are, there&rsquo;s a <em className="text-plum">next step</em>.</>}
           text="From your first scan to IVF, every treatment you need is here, planned just for you."
           action={<Link to="/treatments" className="inline-flex min-h-[3.25rem] items-center gap-3 rounded-full border border-plum/20 bg-white/60 px-7 text-[0.9375rem] font-semibold text-ink backdrop-blur transition hover:border-plum/40 hover:bg-white">All 18 treatments <ArrowRight className="h-4 w-4" /></Link>} />
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-4" onMouseLeave={() => setActive(0)}>
+        {/* phones: two cards side by side (photo becomes a soft band at the bottom); 640px+ keeps the original card */}
+        <ul className="grid grid-cols-2 gap-3 sm:gap-4 md:gap-5 lg:grid-cols-4" onMouseLeave={() => setActive(0)}>
           {INDEX.map((it, i) => {
             const t = treatmentBySlug(it.slug)!
             const on = active === i
             return (
               <Reveal as="li" key={it.slug} delay={i * 0.04} y={14} className="h-full">
                 <Link to={`/treatments/${t.slug}`} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)}
-                  className={`group relative flex h-full min-h-[17rem] flex-col overflow-hidden rounded-[1.5rem] p-6 ring-4 transition duration-500 ease-out md:min-h-[19rem] md:p-7 ${on ? 'bg-gradient-to-br from-plum via-plum-700 to-plum-800 ring-white/70' : 'bg-white/75 ring-white backdrop-blur'}`}>
-                  {/* photo on the right, fading into the card on the left */}
+                  className={`group relative flex h-full min-h-[15.5rem] flex-col overflow-hidden rounded-[1.25rem] p-4 ring-4 transition duration-500 ease-out sm:min-h-[17rem] sm:rounded-[1.5rem] sm:p-6 md:min-h-[19rem] md:p-7 ${on ? 'bg-gradient-to-br from-plum via-plum-700 to-plum-800 ring-white/70' : 'bg-white/75 ring-white backdrop-blur'}`}>
+                  {/* photo on the right, fading into the card on the left (phones: a band along the bottom, fading upwards) */}
                   <img src={it.img} alt="" loading="lazy"
-                    className={`pointer-events-none absolute inset-y-0 right-0 h-full w-[56%] object-cover transition duration-700 [mask-image:linear-gradient(to_left,#000_40%,transparent)] group-hover:scale-[1.04] ${on ? 'opacity-90 mix-blend-luminosity' : 'opacity-85'}`} />
-                  {on && <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-plum/90 via-plum-700/50 to-transparent" />}
+                    className={`pointer-events-none absolute inset-x-0 bottom-0 h-[42%] w-full object-cover transition duration-700 [mask-image:linear-gradient(to_top,#000_35%,transparent)] group-hover:scale-[1.04] sm:inset-x-auto sm:inset-y-0 sm:right-0 sm:h-full sm:w-[56%] sm:[mask-image:linear-gradient(to_left,#000_40%,transparent)] ${on ? 'opacity-90 mix-blend-luminosity' : 'opacity-85'}`} />
+                  {on && <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-b from-plum/90 via-plum-700/60 to-transparent sm:bg-gradient-to-r sm:via-plum-700/50" />}
                   <div className="relative flex flex-1 flex-col">
-                    <span className={`grid h-12 w-12 place-items-center rounded-xl transition duration-500 ${on ? 'bg-white/25 text-white' : 'bg-lilac text-plum'}`}><it.Icon className="h-6 w-6" strokeWidth={1.6} /></span>
-                    <p className={`mt-5 max-w-[66%] font-display text-[1.75rem] font-semibold leading-[1.02] tracking-tight transition-colors duration-500 md:text-[1.85rem] ${on ? '!text-white' : 'text-ink'}`}>{t.name}</p>
-                    <p className={`mt-3 max-w-[60%] text-[0.9375rem] leading-relaxed transition-colors duration-500 ${on ? 'text-white/90' : 'text-ink-2'}`}>{it.desc}</p>
-                    <span className="mt-auto grid h-11 w-11 place-items-center rounded-full bg-white text-ink transition duration-300 group-hover:translate-x-1"><ArrowRight className="h-5 w-5" /></span>
+                    <span className={`grid h-10 w-10 place-items-center rounded-xl transition duration-500 sm:h-12 sm:w-12 ${on ? 'bg-white/25 text-white' : 'bg-lilac text-plum'}`}><it.Icon className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={1.6} /></span>
+                    <p className={`mt-3 font-display text-[1.3rem] font-semibold leading-[1.05] tracking-tight transition-colors duration-500 sm:mt-5 sm:max-w-[66%] sm:text-[1.75rem] sm:leading-[1.02] md:text-[1.85rem] ${on ? '!text-white' : 'text-ink'}`}>{t.name}</p>
+                    <p className={`mt-1.5 line-clamp-3 text-[0.8125rem] leading-snug transition-colors duration-500 sm:mt-3 sm:line-clamp-none sm:max-w-[60%] sm:text-[0.9375rem] sm:leading-relaxed ${on ? 'text-white/90' : 'text-ink-2'}`}>{it.desc}</p>
+                    <span className="mt-auto grid h-9 w-9 place-items-center rounded-full bg-white text-ink transition duration-300 group-hover:translate-x-1 sm:h-11 sm:w-11"><ArrowRight className="h-4 w-4 sm:h-5 sm:w-5" /></span>
                   </div>
                 </Link>
               </Reveal>
@@ -324,14 +367,15 @@ function IvfStoryStacked() {
     <section className="section bg-plum-900 text-paper" aria-label="The IVF journey">
       <div className="container-x">
         <Reveal className="mb-10"><StoryHeading light /></Reveal>
-        <ol className="grid gap-4 md:grid-cols-2">
+        {/* phones: two steps side by side, embryo above the text; 640px+ keeps the embryo beside the text */}
+        <ol className="grid grid-cols-2 gap-3 sm:grid-cols-1 sm:gap-4 md:grid-cols-2">
           {ivfJourney.map((s, i) => (
-            <Reveal as="li" key={s.title} delay={(i % 2) * 0.06} className="flex gap-5 rounded-panel border border-white/10 bg-white/[0.04] p-5 md:p-6">
-              <Embryo stage={i} dark className="h-20 w-20 shrink-0" />
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider text-lilac">{String(i + 1).padStart(2, '0')} · {s.when}</p>
-                <h3 className="mt-1 font-display text-2xl !text-paper">{s.title}</h3>
-                <p className="mt-2 text-[0.9375rem] leading-relaxed text-paper/75">{s.text}</p>
+            <Reveal as="li" key={s.title} delay={(i % 2) * 0.06} className="flex flex-col gap-3 rounded-[1.25rem] border border-white/10 bg-white/[0.04] p-4 sm:flex-row sm:gap-5 sm:rounded-panel sm:p-5 md:p-6">
+              <Embryo stage={i} dark className="h-14 w-14 shrink-0 sm:h-20 sm:w-20" />
+              <div className="min-w-0">
+                <p className="text-[0.6875rem] font-semibold uppercase tracking-wider text-lilac sm:text-xs">{String(i + 1).padStart(2, '0')} · {s.when}</p>
+                <h3 className="mt-1 font-display text-xl leading-tight !text-paper sm:text-2xl">{s.title}</h3>
+                <p className="mt-1.5 text-[0.8125rem] leading-snug text-paper/75 sm:mt-2 sm:text-[0.9375rem] sm:leading-relaxed">{s.text}</p>
               </div>
             </Reveal>
           ))}
@@ -459,22 +503,38 @@ function SpecialistsSticky() {
 
 function SpecialistsCarousel() {
   const track = useRef<HTMLDivElement>(null)
+  const first = doctors[0].tint
+  const archTint = first === 'blush' ? 'bg-blush' : first === 'mist' ? 'bg-[#E6E0EF]' : 'bg-lilac'
   const scroll = (dir: number) => track.current?.scrollBy({ left: dir * (track.current.clientWidth * 0.8), behavior: 'smooth' })
   return (
-    <section className="section bg-blush/60">
+    <section className="section bg-mist">
       <div className="container-x">
-        <SectionHeader title={<>Meet our <em className="text-plum">specialists</em></>}
-          action={<div className="flex gap-2">
-            <button onClick={() => scroll(-1)} aria-label="Previous doctors" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowLeft className="h-5 w-5" /></button>
-            <button onClick={() => scroll(1)} aria-label="Next doctors" className="grid h-12 w-12 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowRight className="h-5 w-5" /></button>
-          </div>} />
+        <div className="mb-10 md:mb-14">
+          <Reveal className="min-w-0"><h2 className="h2 text-balance">Meet our <em className="text-plum">specialists</em></h2></Reveal>
+        </div>
       </div>
-      <div ref={track} data-lenis-prevent-wheel className="no-scrollbar flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 pb-2 scroll-px-5 md:px-8 md:scroll-px-8">
+      {/* relative: keeps the hidden screen-reader stat labels (absolute) inside the track, otherwise they widen the page on phones.
+          No data-lenis-prevent-wheel: up/down scrolling over the cards goes through Lenis like the rest of the page (smooth,
+          and it never blocks the page); Lenis ignores sideways wheel/trackpad and touch, so the carousel still swipes natively. */}
+      {/* data-no-mouse: the mouse wheel / drag don't move these cards; the arrow buttons above do (touch still swipes) */}
+      <div ref={track} data-no-mouse className="no-scrollbar relative flex snap-x [overscroll-behavior-x:contain] snap-mandatory gap-5 overflow-x-auto scroll-smooth px-5 pb-2 scroll-px-5 md:px-8 md:scroll-px-8">
         {doctors.map((d) => (
-          <div key={d.slug} className="flex w-[85%] shrink-0 snap-start flex-col rounded-panel bg-white p-4 shadow-soft sm:w-[46%]">
-            <DoctorCard d={{ ...d, image: landingPhoto(d) }} compact />
-            <p className="mt-2 text-sm text-ink-2">{d.role}</p>
-            <DoctorDetails doc={d} compact />
+          // [&>article]: the doctor card is built to fill its parent's height; here it would leave a blank gap under the
+          // day/time line, so it only takes the height it needs (the buttons still sit at the bottom via mt-auto)
+          <div key={d.slug} className="flex w-[85%] shrink-0 snap-start flex-col rounded-panel bg-white p-4 shadow-soft sm:w-[46%] [&>article>div]:!flex-none [&>article]:!h-auto">
+
+            {/* only the photo, name, chamber days/time, a 2-line description and the two buttons.
+                Every doctor uses the first doctor's colour behind the arch (as on desktop) */}
+            <Link to={`/doctors/${d.slug}`} aria-label={`${d.name}, ${d.title}`} className="relative block overflow-hidden rounded-card">
+              <div className={`relative aspect-[4/5] overflow-hidden ${archTint}`}>
+                <div aria-hidden className="arch-full absolute inset-x-[10%] bottom-0 top-[14%] bg-white/50" />
+                <img src={landingPhoto(d)} alt={d.name} loading="lazy" className="absolute inset-x-0 bottom-0 mx-auto h-[94%] w-auto object-contain object-bottom" />
+                <div className="absolute left-3 top-3"><TodayBadge doctor={d} /></div>
+              </div>
+            </Link>
+            <h3 className="mt-5 font-display text-[1.45rem] leading-tight"><Link to={`/doctors/${d.slug}`} className="hover:text-plum">{d.name}</Link></h3>
+            <p className="mt-2 flex items-start gap-2 text-sm text-ink-2"><Clock className="mt-0.5 h-4 w-4 shrink-0 text-lavender" />{scheduleSummary(d)}</p>
+            <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-ink-2">{d.intro}</p>
             <div className="mt-auto flex gap-2 pt-5">
               <Link to={`/book?doctor=${d.slug}`} className="btn-primary !min-h-[2.75rem] flex-1 !px-4 text-sm">Book</Link>
               <Link to={`/doctors/${d.slug}`} className="btn-secondary !min-h-[2.75rem] flex-1 !px-4 text-sm">Profile</Link>
@@ -483,12 +543,11 @@ function SpecialistsCarousel() {
         ))}
         <div className="w-px shrink-0" />
       </div>
-      {/* swipe hint */}
-      <p className="mt-5 flex items-center justify-center gap-2 text-sm font-medium text-ink-2">
-        <ArrowLeft className="h-4 w-4 text-plum" />
-        Swipe to see all doctors
-        <motion.span animate={{ x: [0, 6, 0] }} transition={{ duration: 1.4, repeat: Infinity, ease: 'easeInOut' }}><ArrowRight className="h-4 w-4 text-plum" /></motion.span>
-      </p>
+      {/* prev/next arrows under the cards, on the right */}
+      <div className="container-x mt-5 flex justify-end gap-2">
+        <button onClick={() => scroll(-1)} aria-label="Previous doctors" className="grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowLeft className="h-4 w-4" /></button>
+        <button onClick={() => scroll(1)} aria-label="Next doctors" className="grid h-10 w-10 place-items-center rounded-full border border-ink/15 bg-white transition hover:border-plum hover:text-plum"><ArrowRight className="h-4 w-4" /></button>
+      </div>
     </section>
   )
 }
@@ -530,11 +589,6 @@ function WhyBento() {
             ))}
           </ul>
 
-          <Reveal delay={0.1} className="mt-10">
-            <Link to="/why-meena" className="btn-primary group !min-h-[56px] !px-8">
-              Explore Our Approach <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
-            </Link>
-          </Reveal>
         </div>
 
         {/* Right: a looping, made-in-code animation in place of a photo (see TrustOrbit) */}
@@ -662,7 +716,9 @@ function TestimonialDeck() {
     window.addEventListener('resize', measure)
     return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
   }, [])
-  const WIRE_SAG = 80
+  // phones: the wire has only a slight, gentle sag (the photos follow it); 768px+ keeps the deeper curve
+  const wideWire = useMedia('(min-width: 768px)')
+  const WIRE_SAG = wideWire ? 80 : 18
   const wireY = (X: number) => { const t = X / wire.vw; return 10 + 4 * WIRE_SAG * t * (1 - t) }
   const sag = (x: number) => wireY(wire.left + x * wire.cw)
   return (
@@ -718,6 +774,7 @@ function ReviewMarquee() {
   const hovering = useRef(false)
   const drag = useRef<{ x: number; left: number; moved: boolean } | null>(null)
   const [dragging, setDragging] = useState(false)
+  const phoneReviews = useMedia('(max-width: 767.98px)')
   const list = [...testimonials, ...testimonials]
 
   // keep the scroll position inside the first copy so the loop never runs out
@@ -785,11 +842,14 @@ function ReviewMarquee() {
 
   return (
     <>
+    {/* phones: no mouse hover-pause or mouse drag; the reviews drift on their own and move with the arrows below */}
     <div ref={track}
-      onMouseEnter={() => { hovering.current = true }} onMouseLeave={() => { hovering.current = false; endDrag() }}
-      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={endDrag} onPointerCancel={endDrag}
+      {...(phoneReviews ? {} : {
+        onMouseEnter: () => { hovering.current = true }, onMouseLeave: () => { hovering.current = false; endDrag() },
+        onPointerDown, onPointerMove, onPointerUp: endDrag, onPointerCancel: endDrag,
+      })}
       onScroll={(e) => wrap(e.currentTarget)}
-      className={`no-scrollbar mt-14 select-none overflow-x-auto md:mt-20 ${dragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
+      className={`no-scrollbar mt-14 select-none overflow-x-auto md:mt-20 ${phoneReviews ? '' : dragging ? 'cursor-grabbing' : 'cursor-grab'}`}>
       <ul className="flex w-max py-2">
         {list.map((t, i) => (
           <li key={`${t.name}-${i}`} aria-hidden={i >= testimonials.length || undefined} className="w-[19rem] shrink-0 pr-5 md:w-[26rem]">
@@ -828,29 +888,32 @@ const PIN_INNER = 'M50 114 C40 99 11 81 11 50 A39 39 0 1 1 89 50 C89 81 60 99 50
 const PIN_ENTER = 0.8
 const LOC_RING_OFFSETS = [0, 9, 19]
 
-function CentrePin({ c, featured, delay, positioned, show }: { c: (typeof centres)[number]; featured: boolean; delay: number; positioned: boolean; show?: boolean }) {
+function CentrePin({ c, featured, delay, positioned, show, className }: { c: (typeof centres)[number]; featured: boolean; delay: number; positioned: boolean; show?: boolean; className?: string }) {
   const reduce = useReducedMotion()
   const L = PIN_LAYOUT[c.slug]
+  // unique per pin: the desktop and phone layouts both render every centre, and a shared id made the phone pins point at
+  // the hidden desktop clip/gradient (photo showed as a plain rectangle with a stray outline)
+  const uid = `${c.slug}-${useId().replace(/:/g, '')}`
   return (
     <motion.div
       initial={reduce ? false : { opacity: 0, scale: 0.55 }}
       {...(show === undefined ? { whileInView: { opacity: 1, scale: 1 }, viewport: { once: true, amount: 0.3 } } : { animate: show ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.55 } })}
       transition={{ duration: 0.7, delay, ease: [0.34, 1.56, 0.64, 1] }}
       style={positioned ? { left: `${L.x}%`, top: `${L.y}%`, width: `${L.w}%`, x: '-50%', y: '-100%', transformOrigin: '50% 100%' } : { transformOrigin: '50% 100%' }}
-      className={positioned ? 'absolute z-10' : `relative mx-auto ${featured ? 'w-56' : 'w-44'}`}>
+      className={positioned ? 'absolute z-10' : (className ?? `relative mx-auto ${featured ? 'w-56' : 'w-44'}`)}>
       <Link to={`/centres/${c.slug}`} aria-label={`${c.name}: see centre details`} className="group relative block transition duration-500 hover:-translate-y-1.5">
         <svg viewBox="0 0 100 130" className="block w-full overflow-visible drop-shadow-[0_22px_28px_rgba(107,31,120,.35)]">
           <defs>
-            <linearGradient id={`pin-ring-${c.slug}`} x1="0" y1="0" x2="1" y2="1">
+            <linearGradient id={`pin-ring-${uid}`} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="#EBC4F0" />
               <stop offset="45%" stopColor="#B25FBF" />
               <stop offset="100%" stopColor="#6B1F78" />
             </linearGradient>
-            <clipPath id={`pin-clip-${c.slug}`}><path d={PIN_INNER} /></clipPath>
+            <clipPath id={`pin-clip-${uid}`}><path d={PIN_INNER} /></clipPath>
           </defs>
-          <path d={PIN_OUTER} fill={`url(#pin-ring-${c.slug})`} />
+          <path d={PIN_OUTER} fill={`url(#pin-ring-${uid})`} />
           <path d={PIN_OUTER} fill="none" stroke="#fff" strokeOpacity=".55" strokeWidth="1" />
-          <image href={c.image} x="0" y="0" width="100" height="118" preserveAspectRatio="xMidYMid slice" clipPath={`url(#pin-clip-${c.slug})`} />
+          <image href={c.image} x="0" y="0" width="100" height="118" preserveAspectRatio="xMidYMid slice" clipPath={`url(#pin-clip-${uid})`} />
           <path d={PIN_INNER} fill="none" stroke="#fff" strokeOpacity=".7" strokeWidth="1.2" />
         </svg>
         <span className={`absolute left-1/2 inline-flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-white/90 font-semibold text-ink shadow-soft backdrop-blur transition group-hover:bg-white ${featured ? 'top-[74%] px-6 py-2.5 text-base xl:text-lg' : 'top-[70%] px-4 py-2 text-sm xl:text-[0.9375rem]'}`}>
@@ -868,9 +931,13 @@ function CentresArches() {
   // Dashed routes from each OPD up to the Banani label (viewBox matches the stage: 1000 × 340)
   const toX = (v: number) => v * 10
   const toY = (v: number) => v * 3.4
+  // each route ends on the pointed tip of its OPD pin (the pin's outline ends 2/130 of its height above the box bottom)
+  const tip = (k: string) => [toX(P(k).x), toY(P(k).y) - P(k).w * 0.2] as const
+  const [kx, ky] = tip('khulna')
+  const [cx, cy] = tip('cumilla')
   const routes = [
-    { d: 'M258,290 C320,238 370,238 425,252', end: [258, 290] },
-    { d: 'M575,252 C630,238 680,238 742,290', end: [742, 290] },
+    { d: `M${kx},${ky} C320,238 370,238 425,252` },
+    { d: `M575,252 C630,238 680,238 ${cx},${cy}` },
   ]
   const pinDelay = (slug: string) => P(slug).order * 0.22
   const pinLoopStart = (slug: string) => pinDelay(slug) + PIN_ENTER
@@ -915,20 +982,25 @@ function CentresArches() {
                 <motion.path d={r.d} fill="none" stroke="#9440A0" strokeWidth="1.6" strokeDasharray="5 6" strokeLinecap="round"
                   initial={reduce ? false : { opacity: 0 }} animate={show ? { opacity: 0.85 } : undefined}
                   transition={{ duration: 0.8, delay: 0.8 + i * 0.15 }} />
-                <motion.circle cx={r.end[0]} cy={r.end[1]} r="4" fill="#9440A0"
-                  initial={reduce ? false : { opacity: 0, scale: 0 }} animate={show ? { opacity: 1, scale: 1 } : undefined}
-                  transition={{ duration: 0.4, delay: 1.1 + i * 0.15 }} />
               </g>
             ))}
           </svg>
-          {list.map((c) => <CentrePin key={c.slug} c={c} featured={c.slug === 'banani'} delay={pinDelay(c.slug)} positioned show={show || !!reduce} />)}
-        </div>
+          {list.map((c) => <CentrePin key={c.slug} c={c} featured={c.slug === 'banani'} delay={pinDelay(c.slug)} positioned show={show || !!reduce} />)}        </div>
 
-        {/* mobile: the same pins, stacked */}
-        <div className="flex flex-col items-center gap-10 md:hidden">
-          {[...list].sort((a, b) => P(a.slug).order - P(b.slug).order).map((c, i) => (
-            <CentrePin key={c.slug} c={c} featured={c.slug === 'banani'} delay={i * 0.15} positioned={false} />
+        {/* mobile: Banani on top, Khulna and Cumilla side by side underneath, level with each other */}
+        <div className="relative flex flex-col items-center gap-8 md:hidden">
+          {list.filter((c) => c.slug === 'banani').map((c) => (
+            <div key={c.slug} className="relative">
+              <CentrePin c={c} featured delay={0} positioned={false} />
+            </div>
           ))}
+          <div className="grid w-full grid-cols-2 items-start gap-4">
+            {list.filter((c) => c.slug !== 'banani').map((c, i) => (
+              <div key={c.slug} className="relative">
+                <CentrePin c={c} featured={false} delay={0.15 + i * 0.15} positioned={false} className="relative mx-auto w-full max-w-[10.5rem]" />
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
@@ -937,12 +1009,14 @@ function CentresArches() {
 
 /* ───────────────── 10. Learn ───────────────── */
 function Learn() {
+  const posts = blog.slice().reverse().slice(0, 3)
   return (
     <section className="section">
       <div className="container-x">
         <SectionHeader title={<>Fertility articles from our <em className="text-plum">doctors</em></>} action={<Link to="/blog" className="btn-secondary">Visit the blog <ArrowRight className="h-4 w-4" /></Link>} />
-        <div className="grid gap-6 md:grid-cols-3">
-          {blog.slice().reverse().slice(0, 3).map((p, i) => (
+        {/* phones: swipe slider (next article peeks in), moved by touch or the arrows below; tablet/desktop: three across */}
+        <div className="m-slider grid gap-6 md:grid-cols-3">
+          {posts.map((p, i) => (
             <Reveal key={p.slug} delay={i * 0.08}>
               <Link to={`/blog/${p.slug}`} className="group block">
                 <div className="aspect-[16/10] overflow-hidden rounded-card bg-mist"><img src={p.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /></div>
@@ -952,6 +1026,7 @@ function Learn() {
             </Reveal>
           ))}
         </div>
+        <SliderArrows label="articles" />
       </div>
     </section>
   )

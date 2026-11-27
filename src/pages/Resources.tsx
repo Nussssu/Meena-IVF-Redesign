@@ -2,12 +2,12 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, Navigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'motion/react'
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Handshake, Heart, Megaphone, Phone, Play, Quote, X } from 'lucide-react'
-import { CurveHero, FacebookIcon, InstagramIcon, LinkedinIcon, TwoTone, WhatsAppIcon, YoutubeIcon, useMeta } from '../components/ui'
+import { CurveHero, FacebookIcon, InstagramIcon, LinkedinIcon, SliderArrows, TwoTone, WhatsAppIcon, YoutubeIcon, useMeta } from '../components/ui'
 import { site, waLink } from '../data/site'
 import { TestimonialCard } from '../components/cards'
 import { centres, channelVideos, events, testimonials, videos } from '../data/content'
 import blog from '../data/blog.json'
-import { lockScroll } from '../lib/smooth'
+import { lockScroll, scrollToTarget } from '../lib/smooth'
 import { useHideOnScroll } from '../components/motion'
 
 /** Tabs, in the same order as the Resources menu on meenaivf.com */
@@ -33,15 +33,35 @@ export function Resources() {
   const pick = (k: TabKey) => setParams(k === 'success-story' ? {} : { tab: k }, { replace: true })
   // Previous / next page at the bottom of every tab: switch tab, then bring the visitor back to the top of the new page
   const tabsRef = useRef<HTMLDivElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
   const idx = RESOURCE_TABS.findIndex((t) => t.key === tab)
   const prev = idx > 0 ? RESOURCE_TABS[idx - 1] : undefined
   const next = idx < RESOURCE_TABS.length - 1 ? RESOURCE_TABS[idx + 1] : undefined
   const go = (k: TabKey) => {
     pick(k)
+    // phones: go to the first section of the new page, just below the sticky site menu + tabs bar
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      const panel = panelRef.current
+      if (panel) scrollToTarget(panel.getBoundingClientRect().top + window.scrollY - 72 - (tabsRef.current?.offsetHeight ?? 0), { immediate: true })
+      return
+    }
     // the tabs bar is sticky, so measure from the header just above it (where the bar naturally sits)
     const header = tabsRef.current?.previousElementSibling
     if (header) window.scrollTo({ top: header.getBoundingClientRect().bottom + window.scrollY, behavior: 'smooth' })
   }
+
+  // Keep the selected tab in the middle of the tabs bar (on phones the bar is wider than the screen), so the page you are
+  // on is always in view: instantly on first load, gliding when you switch tabs
+  const tabBar = useRef<HTMLElement>(null)
+  const firstCentre = useRef(true)
+  useEffect(() => {
+    const bar = tabBar.current
+    const btn = bar?.querySelector('[aria-selected="true"]') as HTMLElement | null
+    if (!bar || !btn) return
+    const left = btn.offsetLeft - (bar.clientWidth - btn.offsetWidth) / 2
+    bar.scrollTo({ left: Math.max(0, left), behavior: firstCentre.current ? 'auto' : 'smooth' })
+    firstCentre.current = false
+  }, [tab])
 
   // The Fertility Blog now has its own page in the main menu
   if (oldBlogTab) return <Navigate to="/blog" replace />
@@ -54,7 +74,7 @@ export function Resources() {
       {/* YouTube-style tabs: plain labels, active one lavender with an underline the width of the label */}
       {/* Sticks to the very top while the site menu is hidden, and slides down under the menu when it reappears */}
       <div ref={tabsRef} className={`sticky z-30 border-b border-line bg-white transition-[top] duration-300 ${menuHidden ? 'top-0' : 'top-[72px]'}`}>
-        <nav aria-label="Journeys" role="tablist" className="container-x no-scrollbar flex gap-8 overflow-x-auto">
+        <nav ref={tabBar} aria-label="Journeys" role="tablist" className="container-x no-scrollbar relative flex gap-8 overflow-x-auto">
           {RESOURCE_TABS.map((t) => {
             const on = t.key === tab
             return (
@@ -68,7 +88,7 @@ export function Resources() {
         </nav>
       </div>
 
-      <div id={`panel-${tab}`} role="tabpanel" className="container-x min-h-[50vh] py-12 md:py-16">
+      <div ref={panelRef} id={`panel-${tab}`} role="tabpanel" className="container-x min-h-[50vh] py-12 md:py-16">
         <AnimatePresence mode="wait">
           <motion.div key={tab} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25 }}>
             {tab === 'success-story' && <SuccessStory />}
@@ -110,15 +130,14 @@ function ChannelHeader() {
   return (
     <header className="bg-white pt-28 md:pt-32">
       <div className="container-x flex flex-col gap-5 pb-6 sm:flex-row sm:items-center sm:gap-10 md:gap-12 md:pb-8">
-        {/* Logo box (no stroke, no shadow) */}
-        <a href={YT} target="_blank" rel="noreferrer" aria-label="Meena IVF on YouTube"
-          className="group shrink-0 rounded-[1.75rem] transition duration-500 hover:rotate-[8deg]">
+        {/* Logo box (no stroke, no shadow); not a link, clicking it does nothing */}
+        <div className="group shrink-0 self-center rounded-[1.75rem] transition duration-500 hover:rotate-[8deg] sm:self-auto">
           <span className="grid h-32 w-32 place-items-center rounded-[1.45rem] bg-white p-1.5 ring-4 ring-white md:h-44 md:w-44">
             <span className="grid h-full w-full place-items-center rounded-[1.1rem] bg-gradient-to-br from-lilac/70 via-white to-blush/70 transition duration-500 group-hover:-rotate-[8deg]">
               <img src="/img/logo-color.webp" alt="Meena IVF & Fertility Care" className="w-[74%] object-contain" />
             </span>
           </span>
-        </a>
+        </div>
         <div className="min-w-0 flex-1">
           <h1 className="sr-only">Meena IVF</h1>
           <p className="text-[0.9375rem] text-muted">
@@ -131,7 +150,8 @@ function ChannelHeader() {
             <button type="button" onClick={() => setMore((m) => !m)} className="font-semibold text-ink hover:underline">{more ? 'less' : '...more'}</button>
           </p>
           {/* Social links (YouTube first) */}
-          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.9375rem]">
+          {/* phones: two per row (2 x 2); 640px+: one row */}
+          <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[0.9375rem] sm:flex sm:flex-wrap sm:items-center">
             {[
               { href: YT, label: 'YouTube', Icon: YoutubeIcon, c: 'text-[#FF0000]' },
               { href: site.social.facebook, label: 'Facebook', Icon: FacebookIcon, c: 'text-[#1877F2]' },
@@ -180,17 +200,47 @@ function SuccessStory() {
     ro.observe(el)
     window.addEventListener('resize', measure)
     return () => { ro.disconnect(); window.removeEventListener('resize', measure) }
-  }, [])
+  }, [wire.md]) // re-attach when the phone/desktop layout swaps (it renders a different box)
   // Like the landing page: on desktop the wire sags in a curve (WIRE_SAG px lower in the middle than at the page edges)
   // and each polaroid hangs where the wire crosses its column. On mobile (horizontal scroll) it stays straight.
   const WIRE_SAG = 80
   const WIRE_Y = 26
   const dip = (X: number) => { if (!wire.md || !wire.vw) return 0; const t = X / wire.vw; return 4 * WIRE_SAG * t * (1 - t) }
   const hang = (i: number) => dip(wire.left + ((i + 0.5) / 4) * wire.cw)
+  // phones: the clothesline exactly as on the landing page (all four polaroids in one row on a gently sagging wire)
+  const PHONE_SAG = 18
+  const phoneY = (X: number) => { const t = wire.vw ? X / wire.vw : 0.5; return 10 + 4 * PHONE_SAG * t * (1 - t) }
+  const phoneHang = (i: number) => phoneY(wire.left + ((i + 0.5) / 4) * wire.cw)
   return (
     <>
       <PanelTitle title="Welcome to the world" text="Every IVF baby carries a story of faith and determination." />
-      {/* Cute polaroids clipped to one straight wire that runs edge to edge of the page, with balloons tied on */}
+      {!wire.md ? (
+        <div ref={wireBox} className="relative">
+          <svg aria-hidden viewBox={`0 0 ${wire.vw || 1} 100`} preserveAspectRatio="none" className="absolute top-0 h-[100px] overflow-visible" style={{ left: -wire.left, width: wire.vw }}>
+            <path d={`M0 10 Q${wire.vw / 2} ${10 + 2 * PHONE_SAG} ${wire.vw} 10`} fill="none" stroke="currentColor" strokeWidth="1.5" vectorEffect="non-scaling-stroke" className="text-ink/35" />
+          </svg>
+          <ul className="relative grid grid-cols-4 gap-3">
+            {['success-1', 'success-2', 'success-3', 'success-4'].map((s, i) => (
+              <li key={s} className="flex flex-col items-center" style={{ marginTop: phoneHang(i) - 14 }}>
+                <motion.div className="flex w-full max-w-[15rem] flex-col items-center" style={{ transformOrigin: '50% 0%' }}
+                  initial={{ opacity: 0, y: -24, rotate: i % 2 ? 6 : -6 }}
+                  whileInView={{ opacity: 1, y: 0, rotate: i % 2 ? 2 : -2 }}
+                  viewport={{ once: true }} transition={{ type: 'spring', stiffness: 120, damping: 9, delay: i * 0.12 }}>
+                  <span aria-hidden className="relative z-10 flex h-7 w-4 gap-px">
+                    <span className="flex-1 rounded-t-sm rounded-b-[2px] bg-[#C9965A]" />
+                    <span className="flex-1 rounded-t-sm rounded-b-[2px] bg-[#B9844A]" />
+                    <span className="absolute inset-x-[-2px] top-[38%] h-1 rounded-full bg-[#8A8A8A]" />
+                  </span>
+                  <div className="-mt-3 w-full rounded-[4px] bg-white p-1.5 pb-5 ring-1 ring-line">
+                    <img src={`/img/${s}.webp`} alt="An IVF baby born to a Meena family" loading="lazy" className="aspect-square w-full rounded-[2px] object-cover" />
+                  </div>
+                </motion.div>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : (
+      /* tablet/desktop: cute polaroids clipped to one wire that runs edge to edge of the page, with balloons tied on */
       <div ref={wireBox} className="relative pt-3">
         {/* the wire: measured to the full page width */}
         {wire.md ? (
@@ -227,6 +277,7 @@ function SuccessStory() {
           ))}
         </ul>
       </div>
+      )}
       <Link to="/blog/second-child-after-long-treatment" className="group mt-14 grid md:mt-20 items-center overflow-hidden rounded-panel bg-white shadow-soft ring-1 ring-line md:grid-cols-[1fr_1.2fr]">
         <img src="/img/blog-second-child.webp" alt="" loading="lazy" className="h-full w-full object-cover" />
         <div className="p-7 md:p-10">
@@ -284,15 +335,17 @@ function PatientReview() {
     <>
       <PanelTitle title="What families say" text="Real words from patients, shared with their permission." />
       {/* four reviews side by side; each rises in one after another as it scrolls into view */}
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      {/* phones: swipe slider moved by touch or the arrows below; tablet: two across; desktop: four */}
+      <div className="m-slider patient-reviews-slider grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {testimonials.map((t, i) => (
           <motion.div key={t.name} className="h-full [&>*]:h-full"
             initial={{ opacity: 0, y: 40, scale: 0.96 }} whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.3 }} transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1], delay: i * 0.1 }}>
-            <TestimonialCard t={t} />
+            <TestimonialCard t={t} compact />
           </motion.div>
         ))}
       </div>
+      <SliderArrows label="reviews" />
       <motion.h3 className="mb-6 mt-14 font-display text-2xl" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ duration: 0.5 }}>
         Shared on WhatsApp and social media
       </motion.h3>
@@ -328,7 +381,8 @@ function DoctorsSpeak() {
         </Link>
         <div>
           <Quote className="h-9 w-9 text-lilac" />
-          <div className="mt-3 space-y-4 text-lg leading-relaxed text-ink-2">
+          {/* justified (hyphenated so narrow lines don't open wide gaps) */}
+          <div className="mt-3 space-y-4 text-justify text-lg leading-relaxed text-ink-2 [hyphens:auto]">
             <p className="font-display text-[1.4rem] leading-snug text-ink">Infertility can have many causes, in the woman, the man or both, and finding the right one is always the first step towards the right treatment.</p>
             <p>When simpler treatments have not worked, IVF is one of the most effective options. We approach it holistically, with a multidisciplinary team guiding every stage of the journey.</p>
             <p>Just as important is emotional support. Fertility treatment can be stressful, and no couple should feel alone while they go through it.</p>
@@ -420,24 +474,6 @@ function VideosTab() {
       <PanelTitle title="Videos" text="Infertility awareness and IVF treatment talks from our specialists." />
       {/* all videos from the Meena IVF YouTube channel */}
       <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">{channelVideos.map((v) => <VideoCard key={v.id} v={v} />)}</div>
-      <div className="mt-14 grid gap-10 rounded-panel bg-white p-7 shadow-soft ring-1 ring-line md:p-10 lg:grid-cols-2">
-        <div>
-          <p className="eyebrow mb-3">Male fertility</p>
-          <h3 className="font-display text-3xl">What is the DFI test?</h3>
-          <p className="mt-4 text-ink-2">The DNA Fragmentation Index measures the percentage of sperm with damaged or fragmented DNA, going beyond standard count, motility and morphology. Meena IVF offers DFI testing as part of comprehensive male infertility assessment in Bangladesh.</p>
-          <p className="mt-5 font-semibold">Recommended for:</p>
-          <ul className="mt-2 space-y-1.5 text-ink-2">
-            <li>· Recurrent miscarriage or repeated IVF/ICSI failure</li>
-            <li>· Unexplained male or couple infertility</li>
-            <li>· Men aged 40+, smokers, alcohol users, varicocele, or toxin exposure</li>
-          </ul>
-        </div>
-        <div className="grid gap-3 self-center">
-          {[['Below 15–20%', 'Normal or high fertility potential', 'bg-ok/10 text-ok'], ['20–29%', 'Moderate or fair DNA integrity', 'bg-honey/15 text-[#8a5f0f]'], ['30% and above', 'High fragmentation; lowers natural and IVF/ICSI success', 'bg-err/10 text-err']].map(([r, d, c]) => (
-            <div key={r} className="flex items-center gap-5 rounded-card bg-mist p-5"><span className={`shrink-0 rounded-full px-3 py-1.5 font-display text-lg ${c}`}>{r}</span><span className="text-ink-2">{d}</span></div>
-          ))}
-        </div>
-      </div>
     </>
   )
 }
@@ -474,9 +510,10 @@ export function FertilityBlog() {
     <CurveHero image="/img/blog-hero.webp" alt="A woman looking at a pregnancy test"
       title="Fertility Blog" subtitle="Infertility blog and fertility awareness hub: articles on IVF, IUI, PCOS, AMH, and male and female infertility." />
     <div className="container-x pb-20 pt-12 md:pb-28 md:pt-16">
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      {/* phones: more space between posts plus a thin divider, so each post reads as its own block; tablet/desktop: grid */}
+      <div className="grid gap-8 max-md:gap-0 max-md:divide-y max-md:divide-line md:grid-cols-2 lg:grid-cols-3">
         {posts.map((p) => (
-          <Link key={p.slug} to={`/blog/${p.slug}`} className="group block">
+          <Link key={p.slug} to={`/blog/${p.slug}`} className="group block max-md:py-10 max-md:first:pt-0 max-md:last:pb-0">
             <div className="aspect-[16/10] overflow-hidden rounded-card bg-mist"><img src={p.image} alt="" loading="lazy" className="h-full w-full object-cover transition duration-700 group-hover:scale-105" /></div>
             <p className="mt-4 text-sm text-muted">{p.categories.join(' · ')} · {fmtDate(p.date)}</p>
             <h3 lang="bn" className="mt-2 font-bn text-xl font-semibold leading-snug group-hover:text-plum">{p.title}</h3>

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { Link } from 'react-router-dom'
 import { ArrowRight, Check, Eye, FlaskConical, HandHeart, HeartHandshake, Lock, MessageCircle, Target, Upload, Users } from 'lucide-react'
-import { CTABand, Counter, CurveHero, Reveal, SectionHeader, TwoTone, useMeta } from '../components/ui'
+import { CTABand, Counter, CurveHero, Reveal, SectionHeader, SliderArrows, TwoTone, useMeta } from '../components/ui'
 import { ImageReveal } from '../components/motion'
 import { milestones, team, whyMeena } from '../data/content'
 import { doctors } from '../data/doctors'
@@ -39,11 +39,67 @@ function MilestoneTimeline() {
   })
   const shown = (i: number) => !pinned || i < reached
 
+  // phones: a vertical timeline on the left. The line fills down as you scroll (up to the reading point, 60% down the
+  // screen), each dot fills once the line reaches it, and the milestone at the reading point is highlighted.
+  const [phone, setPhone] = useState(false)
+  useEffect(() => {
+    const m = window.matchMedia('(max-width: 767.98px)')
+    const on = () => setPhone(m.matches)
+    on(); m.addEventListener('change', on)
+    return () => m.removeEventListener('change', on)
+  }, [])
+  const vList = useRef<HTMLOListElement>(null)
+  const [vFill, setVFill] = useState(0)
+  const [vTrack, setVTrack] = useState(0)
+  const [vActive, setVActive] = useState(reduce ? n - 1 : -1)
+  useEffect(() => {
+    if (!phone) return
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const ol = vList.current
+      if (!ol) return
+      const items = [...ol.children] as HTMLElement[]
+      const track = items.length ? items[items.length - 1].offsetTop + 8 : 0 // from the first dot to the last dot
+      const y = window.innerHeight * 0.6 - ol.getBoundingClientRect().top // reading point, measured inside the list
+      setVTrack(track)
+      setVFill(reduce ? track : Math.max(0, Math.min(track, y)))
+      if (!reduce) setVActive(items.reduce((k, li, i) => (li.offsetTop + 8 <= y ? i : k), -1))
+    }
+    const on = () => { if (!raf) raf = requestAnimationFrame(update) }
+    update()
+    window.addEventListener('scroll', on, { passive: true })
+    window.addEventListener('resize', on)
+    return () => { window.removeEventListener('scroll', on); window.removeEventListener('resize', on); cancelAnimationFrame(raf) }
+  }, [phone, reduce])
+
   return (
-    <section ref={ref} className={`relative bg-plum-900 text-paper ${pinned ? '' : 'section'}`} style={pinned ? { height: `${n * 70 + 60}vh` } : undefined}>
+    <section ref={ref} className={`relative bg-plum-900 text-paper ${pinned ? '' : 'section max-md:!py-10'}`} style={pinned ? { height: `${n * 70 + 60}vh` } : undefined}>
       <div className={pinned ? 'sticky top-0 flex h-screen flex-col justify-center overflow-hidden' : ''}>
         <div className="container-x w-full">
           <SectionHeader light eyebrow="Our journey" title={<>Milestones that shape our story</>} />
+          {phone ? (
+            /* phones: vertical timeline with the line and dots on the left */
+            <div className="relative">
+              <div aria-hidden className="absolute left-[7px] top-[8px] w-[2px] bg-white/15" style={{ height: vTrack }}>
+                <div className="w-full bg-gradient-to-b from-lilac to-[#E7A6F0] transition-[height] duration-150 ease-out" style={{ height: vFill }} />
+              </div>
+              <ol ref={vList} className="relative space-y-9">
+                {milestones.map((m, i) => {
+                  const reachedDot = i <= vActive || reduce
+                  const current = !!reduce || i === vActive // reduced motion: all shown at full strength
+                  return (
+                    <li key={m.title} className="relative pl-9">
+                      <span aria-hidden className={`absolute left-0 top-0 block h-4 w-4 rounded-full border-2 transition-all duration-500 ${reachedDot ? 'border-[#E7A6F0] bg-[#E7A6F0]' : 'border-white/30 bg-plum-900'} ${current ? 'scale-110 shadow-[0_0_0_6px_rgba(231,166,240,.2)]' : ''}`} />
+                      <p className={`-mt-1.5 font-display text-4xl leading-none transition-colors duration-500 ${current ? 'text-[#E7A6F0]' : 'text-lilac/55'}`}>{m.year}</p>
+                      <h3 className={`mt-3 font-display text-xl transition-colors duration-500 ${current ? '!text-[#F6D3FA]' : '!text-paper/60'}`}>{m.title}</h3>
+                      <p className={`mt-2 transition-colors duration-500 ${current ? 'text-paper/90' : 'text-paper/45'}`}>{m.text}</p>
+                    </li>
+                  )
+                })}
+              </ol>
+            </div>
+          ) : (
           <div className="relative">
             {/* the track and the growing line, from the first dot to the last */}
             {pinned && (
@@ -67,6 +123,7 @@ function MilestoneTimeline() {
               ))}
             </ol>
           </div>
+          )}
         </div>
       </div>
     </section>
@@ -97,7 +154,9 @@ function StairCards({ items }: { items: [typeof Eye, string, string][] }) {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start 85%', 'start 25%'] })
   const progress = useSpring(scrollYProgress, { stiffness: 90, damping: 24, mass: 0.4 })
   return (
-    <div ref={ref} className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+    <>
+    {/* phones: swipe slider moved by touch or the arrows below; tablet: two across; desktop: four */}
+    <div ref={ref} className="m-slider grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {items.map(([Icon, t, d], i) => (
         <StairCard key={t} i={i} n={items.length} progress={progress} stair={wide && !reduce}>
           <Icon className="h-9 w-9 text-plum" strokeWidth={1.6} />
@@ -106,6 +165,49 @@ function StairCards({ items }: { items: [typeof Eye, string, string][] }) {
         </StairCard>
       ))}
     </div>
+    <SliderArrows />
+    </>
+  )
+}
+
+/* Our foundation: mission, vision and values. Tablet/desktop: three staggered cards (middle one raised); on hover a card
+   lifts, its border and shadow warm to plum, and the icon turns plum and wiggles.
+   Phones: a swipe slider (one card at a time, the next peeking in) moved by touch or the arrows under it. */
+const FOUNDATION = [
+  ['Our mission', 'To provide advanced fertility care with compassion, precision and trust, helping every patient feel supported throughout their journey.', HandHeart],
+  ['Our vision', 'To be a leading fertility care centre known for ethical treatment, modern reproductive solutions and patient-centred excellence.', PeakFlag],
+  ['Our values', 'Compassion, professionalism, transparency, quality, safety and continuous improvement guide everything we do.', HeartHandshake],
+] as const
+
+function FoundationCard({ t, d, Icon }: { t: string; d: string; Icon: (typeof FOUNDATION)[number][2] }) {
+  return (
+    <div className="group h-full rounded-[1.75rem] border border-plum/10 bg-white/80 p-8 shadow-[0_18px_40px_-28px_rgba(74,21,84,.35)] backdrop-blur transition duration-500 ease-out hover:-translate-y-2 hover:border-plum/30 hover:bg-white hover:shadow-[0_30px_60px_-28px_rgba(128,41,143,.45)] md:p-10">
+      <span className="block w-fit text-plum-700 transition duration-500 group-hover:-rotate-6 group-hover:scale-110 group-hover:text-plum">
+        <Icon className="h-14 w-14" strokeWidth={1.3} />
+      </span>
+      <h3 className="mt-6 font-display text-[1.75rem] font-semibold leading-tight text-ink md:text-[2rem]">{t}</h3>
+      <p className="mt-6 text-[1.0625rem] leading-relaxed text-ink-2">{d}</p>
+    </div>
+  )
+}
+
+function FoundationSection() {
+  return (
+    // phones: a little less space above (under "What makes our care different")
+    <section className="section bg-mist pt-10 max-md:!pb-10 max-md:!pt-4 md:pt-12 lg:pt-14">
+      <div className="container-x">
+        <SectionHeader align="center" eyebrow="Our foundation" title="Mission, vision and values" />
+        {/* phones: swipe slider moved by touch or the arrows below; tablet/desktop: three staggered cards */}
+        <div className="m-slider grid gap-6 md:grid-cols-3 md:items-start md:pt-12">
+          {FOUNDATION.map(([t, d, Icon], i) => (
+            <Reveal key={t} delay={i * 0.08} className={i === 1 ? 'md:-mt-10' : i === 2 ? 'md:mt-6' : ''}>
+              <FoundationCard t={t} d={d} Icon={Icon} />
+            </Reveal>
+          ))}
+        </div>
+        <SliderArrows />
+      </div>
+    </section>
   )
 }
 
@@ -118,10 +220,13 @@ export function About() {
         title={<>About <em className="text-[#E7A6F0]">Meena IVF</em> &amp; Fertility Care Ltd.</>}
         subtitle="We help individuals and couples move closer to parenthood through ethical guidance, modern reproductive treatment and deeply compassionate care.">
         <Link to="/book" className="btn-light">Book appointment</Link>
-        <Link to="/team" className="btn-ghost-light">Meet our team</Link>
+        {/* always in the "hovered" look (faint white fill); on hover only the outline changes, to solid white */}
+        <Link to="/team" className="btn-ghost-light !bg-white/10 hover:!border-white">Meet our team</Link>
       </CurveHero>
 
-      <section className="section pb-10 md:pb-12 lg:pb-14">
+      {/* phones: every About section has the same 40px above and below (max-md:!py-10) */}
+      {/* tablet/desktop: less space under the hero (was 96/112px) */}
+      <section className="section pb-10 max-md:!py-10 md:pb-12 md:pt-12 lg:pb-14 lg:pt-16">
         <div className="container-x">
           <SectionHeader title={<>What makes our care <em className="text-plum">different</em></>} />
           <StairCards items={[
@@ -133,30 +238,7 @@ export function About() {
         </div>
       </section>
 
-      <section className="section bg-mist pt-10 md:pt-12 lg:pt-14">
-        <div className="container-x">
-          <SectionHeader align="center" eyebrow="Our foundation" title="Mission, vision and values" />
-          {/* three cards, the middle one raised; icon, title and text. On hover a card lifts,
-              its border and shadow warm to plum, and the icon turns plum and wiggles */}
-          <div className="grid gap-6 md:grid-cols-3 md:items-start md:pt-12">
-            {([
-              ['Our mission', 'To provide advanced fertility care with compassion, precision and trust, helping every patient feel supported throughout their journey.', HandHeart],
-              ['Our vision', 'To be a leading fertility care centre known for ethical treatment, modern reproductive solutions and patient-centred excellence.', PeakFlag],
-              ['Our values', 'Compassion, professionalism, transparency, quality, safety and continuous improvement guide everything we do.', HeartHandshake],
-            ] as const).map(([t, d, Icon], i) => (
-              <Reveal key={t} delay={i * 0.08} className={i === 1 ? 'md:-mt-10' : i === 2 ? 'md:mt-6' : ''}>
-                <div className="group h-full rounded-[1.75rem] border border-plum/10 bg-white/80 p-8 shadow-[0_18px_40px_-28px_rgba(74,21,84,.35)] backdrop-blur transition duration-500 ease-out hover:-translate-y-2 hover:border-plum/30 hover:bg-white hover:shadow-[0_30px_60px_-28px_rgba(128,41,143,.45)] md:p-10">
-                  <span className="block w-fit text-plum-700 transition duration-500 group-hover:-rotate-6 group-hover:scale-110 group-hover:text-plum">
-                    <Icon className="h-14 w-14" strokeWidth={1.3} />
-                  </span>
-                  <h3 className="mt-6 font-display text-[1.75rem] font-semibold leading-tight text-ink md:text-[2rem]">{t}</h3>
-                  <p className="mt-6 text-[1.0625rem] leading-relaxed text-ink-2">{d}</p>
-                </div>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      <FoundationSection />
 
       <MilestoneTimeline />
 
@@ -164,7 +246,7 @@ export function About() {
         { img: '/img/chairman.webp', cut: '/img/chairman-cut.webp', pos: '50% 20%', eyebrow: 'Message from the Chairman', title: 'A commitment to hope, dignity and care.', name: 'Md. Moniruzzaman', role: 'Chairman', body: ['At Meena IVF & Fertility Care, we believe fertility care is about more than treatment. It is about trust, emotional strength and responsible medical guidance.', 'Our vision has always been to build a centre where every patient feels respected, supported and confident in the care they receive. We remain committed to ethical treatment, advanced reproductive support and a warm, reassuring environment for every family that places their trust in us.'] },
         { img: '/img/director.webp', cut: '', pos: '58% 30%', eyebrow: 'Message from the Director', title: 'Guiding every journey with expertise and compassion.', name: 'Farhin Zaman', role: 'Director', body: ['We see fertility care as a responsibility that goes beyond clinical treatment: understanding emotions, respecting individual journeys and delivering care with honesty, empathy and precision.', 'Every patient who walks through our doors deserves clarity, confidence and reassurance. Your trust is the foundation of our work, and we remain dedicated to supporting you with integrity at every step toward parenthood.'] },
       ].map((m, i) => (
-        <section key={m.name} className={`section ${i === 0 ? 'pb-8 md:pb-10 lg:pb-12' : 'pt-8 md:pt-10 lg:pt-12'}`}>
+        <section key={m.name} className={`section max-md:!py-10 ${i === 0 ? 'pb-8 md:pb-10 lg:pb-12' : 'pt-8 md:pt-10 lg:pt-12'}`}>
           <div className={`container-x grid items-center gap-12 lg:grid-cols-[.8fr_1.2fr] lg:gap-20 ${i % 2 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
             {/* same arch as the landing page's "Meet our specialists": the Chairman's cut-out stands in a lilac arch with a
                 soft white inner arch; the Director's photo fills the same arch shape */}
@@ -185,7 +267,7 @@ export function About() {
             <Reveal delay={0.1}>
               <p className="inline-flex rounded-full bg-lilac px-4 py-1.5 text-eyebrow font-semibold uppercase text-plum">{m.eyebrow}</p>
               <h2 className="h2 mt-6 text-balance"><TwoTone text={m.title} /></h2>
-              <div className="mt-6 space-y-4 text-[1.0625rem] leading-relaxed text-ink-2">{m.body.map((p) => <p key={p.slice(0, 20)}>{p}</p>)}</div>
+              <div className="mt-6 space-y-4 text-[1.0625rem] leading-relaxed text-ink-2 max-md:text-justify max-md:[hyphens:auto]">{m.body.map((p) => <p key={p.slice(0, 20)}>{p}</p>)}</div>
               <div className="mt-8 border-l-4 border-plum pl-5">
                 <p className="font-display text-2xl text-ink">{m.name}</p>
                 <p className="mt-1 text-sm text-ink-2">{m.role}, {site.legal}</p>
@@ -214,7 +296,7 @@ export function WhyMeena() {
   return (
     <>
       {/* hero in the treatment-page style, with its own photo: the consultation room at Banani */}
-      <CurveHero image="/img/banani-gallery-2.webp" alt="Consultation room at the Meena IVF Banani centre"
+      <CurveHero symmetric image="/img/banani-gallery-2.webp" alt="Consultation room at the Meena IVF Banani centre"
         title={<>Why <em className="text-[#E7A6F0]">Meena IVF</em></>}
         subtitle="Fertility treatment is more than a medical service. It needs trust, sensitivity, precision, and a team that understands your journey.">
         <Link to="/book" className="btn-light">Book appointment</Link>
@@ -233,27 +315,33 @@ export function WhyMeena() {
         </div>
       </section>
       <section className="py-14 md:py-16 lg:py-20">
-        <div className="container-x grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+        <div className="container-x">
+          <SectionHeader align="center" eyebrow="Why families choose us" title={<>What makes Meena IVF <em className="text-plum">different</em></>} />
+          {/* phones: two cards side by side (tighter padding and type); 640px+ unchanged */}
+          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
           {whyMeena.map((w, i) => (
             <Reveal key={w.title} delay={(i % 3) * 0.06}>
-              <div className="card h-full p-8">
-                <span className="font-display text-sm text-muted">0{i + 1}</span>
-                <h3 className="mt-6 font-display text-2xl">{w.title}</h3>
-                <p className="mt-3 text-ink-2">{w.text}</p>
+              {/* hover: lifts slightly, lilac tint + plum border and accents, no dark shadow */}
+              <div className="card group h-full p-4 transition duration-300 ease-out hover:-translate-y-1 hover:border-plum/40 hover:bg-lilac/40 sm:p-8">
+                <span className="font-display text-sm text-muted transition-colors duration-300 group-hover:text-plum">0{i + 1}</span>
+                <h3 className="mt-3 font-display text-lg leading-snug transition-colors duration-300 group-hover:text-plum sm:mt-6 sm:text-2xl">{w.title}</h3>
+                <p className="mt-2 text-[0.8125rem] leading-snug text-ink-2 sm:mt-3 sm:text-base sm:leading-[1.65]">{w.text}</p>
               </div>
             </Reveal>
           ))}
+          </div>
         </div>
       </section>
       {[
         { img: '/img/doctors-duo-hd.webp', eyebrow: 'Expert-led care', title: 'Guided by experienced fertility professionals.', text: 'Accurate diagnosis, ethical treatment planning and a patient-first approach that builds confidence at every stage.', points: ['Clear evaluation and treatment explanation', 'Structured, evidence-based fertility planning', 'Professional care with compassion and transparency'] },
         { img: '/img/lab-microscope-hd.webp', eyebrow: 'Technology & precision', title: 'An in-house OT and modern IVF laboratory.', text: 'Egg retrieval, embryo transfer and sperm retrieval are performed safely under controlled conditions, without moving between facilities.', points: ['Advanced IVF, IUI and ICSI procedures', 'Embryology lab with vitrification', 'Precision-driven, quality-focused systems'] },
-        { img: '/img/patient-care-hd.webp', eyebrow: 'Comfort & support', title: 'A journey designed with sensitivity and respect.', text: 'Privacy, comfort, respectful care and continuous support, plus psychological and financial counselling when you need it.', points: ['Respectful, confidential environment', 'Transparent communication and realistic guidance', 'Support from first visit to treatment and beyond'] },
+        { img: '/img/comfort-support.webp', eyebrow: 'Comfort & support', title: 'A journey designed with sensitivity and respect.', text: 'Privacy, comfort, respectful care and continuous support, plus psychological and financial counselling when you need it.', points: ['Respectful, confidential environment', 'Transparent communication and realistic guidance', 'Support from first visit to treatment and beyond'] },
       ].map((b, i) => (
         <section key={b.title} className={`py-14 md:py-16 lg:py-20 ${i % 2 ? 'bg-mist' : ''}`}>
-          <div className={`container-x grid items-center gap-12 lg:grid-cols-2 lg:gap-20 ${i % 2 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
-            <ImageReveal src={b.img} className="aspect-[5/4] rounded-panel" />
-            <Reveal delay={0.1}>
+          {/* a block without a photo (Comfort & support) shows its text on its own, full width */}
+          <div className={`container-x grid items-center gap-12 ${b.img ? 'lg:grid-cols-2 lg:gap-20' : ''} ${i % 2 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
+            {b.img && <ImageReveal src={b.img} className="aspect-[5/4] rounded-panel" />}
+            <Reveal delay={b.img ? 0.1 : 0}>
               <p className="eyebrow mb-5">{b.eyebrow}</p>
               <h2 className="h2 text-balance"><TwoTone text={b.title} /></h2>
               <p className="mt-5 text-lg text-ink-2">{b.text}</p>
@@ -262,17 +350,22 @@ export function WhyMeena() {
           </div>
         </section>
       ))}
-      <section className="pb-20 pt-14 md:pb-24 md:pt-16 lg:pt-20">
+      <section className="pb-20 pt-4 md:pb-24 md:pt-6 lg:pt-8">
         <div className="container-x">
           <SectionHeader align="center" eyebrow="How it works" title="From first conversation to confident next step" />
-          <div className="grid gap-4 md:grid-cols-4">
+          {/* phones: swipe slider; tablet/desktop: four across */}
+          <div className="m-slider grid gap-4 md:grid-cols-4">
             {[[MessageCircle, 'Consultation', 'Understand your fertility concerns clearly'], [Eye, 'Diagnosis', 'Identify the most suitable treatment path'], [FlaskConical, 'Treatment', 'Receive a personalised fertility care plan'], [Lock, 'Support', 'Move forward with confidence and guidance']].map(([I, t, d], i) => { const Icon = I as typeof Eye; return (
-              <Reveal key={t as string} delay={i * 0.08} className="card p-7 text-center">
-                <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-lilac text-plum"><Icon className="h-6 w-6" /></span>
-                <p className="mt-5 font-display text-xl">{t as string}</p><p className="mt-2 text-sm text-ink-2">{d as string}</p>
+              <Reveal key={t as string} delay={i * 0.08} className="h-full">
+                {/* hover: card lifts with a lilac tint, the icon circle fills plum; no shadow */}
+                <div className="card group h-full p-7 text-center transition duration-300 ease-out hover:-translate-y-1 hover:border-plum/40 hover:bg-lilac/40">
+                  <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-lilac text-plum transition-colors duration-300 group-hover:bg-plum group-hover:text-white"><Icon className="h-6 w-6" /></span>
+                  <p className="mt-5 font-display text-xl transition-colors duration-300 group-hover:text-plum">{t as string}</p><p className="mt-2 text-sm text-ink-2">{d as string}</p>
+                </div>
               </Reveal>
             ) })}
           </div>
+          <SliderArrows label="steps" />
         </div>
       </section>
       <CTABand />
@@ -338,8 +431,9 @@ export function Careers() {
         <div className="container-x grid gap-14 lg:grid-cols-[.9fr_1.1fr]">
           <Reveal>
             <h2 className="h2 text-balance">Build a career that helps <em className="text-plum">families begin</em>.</h2>
-            <p className="mt-5 text-lg text-ink-2">We provide advanced fertility treatment and compassionate care to every patient, and a supportive environment for every professional.</p>
-            <p className="mt-4 text-ink-2">We are always looking for talented, motivated and caring people who want to make a real difference in reproductive healthcare.</p>
+            {/* intro text: justified (hyphenated so narrow lines don't open wide gaps) */}
+            <p className="mt-5 text-justify text-lg text-ink-2 [hyphens:auto]">We provide advanced fertility treatment and compassionate care to every patient, and a supportive environment for every professional.</p>
+            <p className="mt-4 text-justify text-ink-2 [hyphens:auto]">We are always looking for talented, motivated and caring people who want to make a real difference in reproductive healthcare.</p>
             <div className="mt-8 flex flex-wrap gap-2">{['Medical Officer', 'Nurse', 'Embryologist', 'Administration', 'Marketing', 'Customer Support'].map((d) => <span key={d} className="chip">{d}</span>)}</div>
             <img src="/img/event-6.webp" alt="The Meena IVF team at the Banani centre" loading="lazy" className="mt-10 aspect-[4/3] w-full rounded-panel object-cover" />
           </Reveal>

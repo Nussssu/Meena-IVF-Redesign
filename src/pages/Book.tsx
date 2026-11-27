@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ArrowLeft, ArrowRight, Building2, CalendarDays, Check, Clock, MapPin, Monitor, Phone, Stethoscope, User } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Building2, CalendarDays, Check, ChevronDown, Clock, Download, MapPin, Monitor, Phone, Stethoscope, User } from 'lucide-react'
+import { downloadConfirmation } from '../lib/confirmation'
 import { Breadcrumbs, WhatsAppIcon, useMeta } from '../components/ui'
 import { dayNames, doctorBySlug, doctors, sessionsOn, type Doctor } from '../data/doctors'
 import { centres, nextMonthly } from '../data/content'
@@ -73,7 +74,8 @@ export default function Book() {
   const formValid = !errors.name && !errors.phone && !errors.email && !errors.consent
 
   const canNext = [!!loc, !!doc, !!date, !!time, formValid][step]
-  const go = (n: number) => { setStep(n); scrollToTarget(0) }
+  // Keep the current screen position while moving between booking steps.
+  const go = (n: number) => { setStep(n) }
 
   const pickLoc = (l: Loc) => {
     setLoc(l); setDate(null); setTime(null)
@@ -96,25 +98,52 @@ export default function Book() {
 
   const waText = `Assalamu alaikum, I would like to confirm an appointment request.\nName: ${form.name}\nPhone: ${form.phone}\nCentre: ${summary.Centre}\nSpecialist: ${summary.Specialist}\nDate: ${summary.Date}\nTime: ${summary.Time}${form.reason ? `\nRegarding: ${treatmentBySlug(form.reason)?.name}` : ''}`
 
+  // saves the confirmation as a PNG image (src/lib/confirmation.ts)
+  const download = () => {
+    if (!done) return
+    const rows: [string, string][] = Object.entries({ Reference: done, Name: form.name, Phone: form.phone, ...summary, ...(form.reason ? { Regarding: treatmentBySlug(form.reason)?.name } : {}) })
+      .map(([k, v]) => [k, v ?? ''])
+    downloadConfirmation({ firstName: form.name.split(' ')[0], phone: form.phone, rows, clinic: { name: site.name, address: site.address, hotline: site.hotline, email: site.email }, fileName: `Meena-IVF-appointment-${done}.png` })
+  }
+
   if (done) {
     return (
       <section className="grain relative min-h-[90vh] bg-mist pb-24 pt-32 md:pt-40">
         <div className="container-x max-w-2xl">
-          <motion.div initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-8 shadow-lift md:p-12">
-            <motion.span initial={reduce ? false : { scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }} className="grid h-16 w-16 place-items-center rounded-full bg-ok text-white"><Check className="h-8 w-8" strokeWidth={2.5} /></motion.span>
+          {/* #booking-print: when printing, only this card is shown (see the print rules in index.css) */}
+          <motion.div id="booking-print" initial={reduce ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="card p-8 shadow-lift md:p-12">
+            {/* clinic header, only on the printout */}
+            <div className="mb-8 hidden border-b border-line pb-5 print:block">
+              <p className="font-display text-2xl text-plum">{site.name}</p>
+              <p className="mt-1 text-sm text-ink-2">{site.address}</p>
+              <p className="text-sm text-ink-2">Hotline {site.hotline} · {site.email}</p>
+              <p className="mt-4 text-eyebrow font-semibold uppercase text-muted">Appointment request · printed {new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+            </div>
+            {/* green tick on the left, Download on the right of the same row (phone and desktop) */}
+            <div className="flex items-center justify-between gap-4">
+              <motion.span initial={reduce ? false : { scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', delay: 0.2 }} className="grid h-16 w-16 place-items-center rounded-full bg-ok text-white"><Check className="h-8 w-8" strokeWidth={2.5} /></motion.span>
+              <button type="button" onClick={download}
+                className="inline-flex min-h-[2.75rem] items-center gap-2 rounded-full border border-ink/15 bg-white px-5 text-[0.9375rem] font-semibold text-ink shadow-soft transition hover:border-plum/40 hover:text-plum print:hidden">
+                <Download className="h-4 w-4" /> Download
+              </button>
+            </div>
             <h1 className="h2 mt-6">Thank you, {form.name.split(' ')[0]}.</h1>
             <p className="mt-3 text-lg text-ink-2">Your request is with our care team. We will call <strong>{form.phone}</strong> within 24 hours to confirm.</p>
             <dl className="mt-8 divide-y divide-line rounded-card border border-line">
               {Object.entries({ Reference: done, ...summary }).map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-4 px-5 py-3 text-sm"><dt className="text-muted">{k}</dt><dd className="text-right font-semibold">{v}</dd></div>
               ))}
+              {/* patient details, only on the printout */}
+              {Object.entries({ Name: form.name, Phone: form.phone, ...(form.reason ? { Regarding: treatmentBySlug(form.reason)?.name } : {}) }).map(([k, v]) => (
+                <div key={k} className="hidden justify-between gap-4 px-5 py-3 text-sm print:flex"><dt className="text-muted">{k}</dt><dd className="text-right font-semibold">{v}</dd></div>
+              ))}
             </dl>
-            <div className="btn-pair mt-8">
+            <div className="btn-pair mt-8 print:hidden">
               <a href={waLink(`${waText}\nReference: ${done}`)} target="_blank" rel="noreferrer" className="btn bg-whatsapp text-whatsapp-ink hover:brightness-95"><WhatsAppIcon className="h-5 w-5" /> <span className="sm:hidden">WhatsApp</span><span className="hidden sm:inline">Confirm on WhatsApp</span></a>
               <a href={site.hotlineHref} className="btn-secondary"><Phone className="h-4 w-4" /> Call<span className="hidden sm:inline">&nbsp;{site.hotline}</span></a>
             </div>
-            <p className="mt-6 rounded-xl bg-mist p-4 text-sm text-muted">Demo preview: this form is not yet connected to the clinic system, so no data has been sent. In the live site, requests go straight to the care team.</p>
-            <Link to="/" className="link-quiet mt-6">Back to home</Link>
+            <p className="mt-6 hidden text-sm text-ink-2 print:block">Please bring this printout and a photo ID to your appointment. Our care team will call you to confirm the final time.</p>
+            <Link to="/" className="link-quiet mt-6 print:hidden">Back to home</Link>
           </motion.div>
         </div>
       </section>
@@ -242,10 +271,8 @@ export default function Book() {
                         <input id="email" type="email" autoComplete="email" className="field" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} onBlur={() => setTouched({ ...touched, email: true })} aria-invalid={!!(touched.email && errors.email)} aria-describedby="email-err" />
                       </Field>
                       <Field id="reason" label="What is it about?" hint="Optional">
-                        <select id="reason" className="field" value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })}>
-                          <option value="">General fertility consultation</option>
-                          {treatments.map((t) => <option key={t.slug} value={t.slug}>{t.name}: {t.full}</option>)}
-                        </select>
+                        <ReasonSelect value={form.reason} onChange={(v) => setForm({ ...form, reason: v })}
+                          options={[{ value: '', label: 'General fertility consultation' }, ...treatments.map((t) => ({ value: t.slug, label: `${t.name}: ${t.full}` }))]} />
                       </Field>
                       <div className="sm:col-span-2">
                         <Field id="notes" label="Anything we should know?" hint="Optional">
@@ -303,6 +330,69 @@ export default function Book() {
         </div>
       </div>
     </section>
+  )
+}
+
+/* "What is it about?" dropdown. Replaces the native <select>, whose option list sized itself to the longest treatment name
+   (running off the screen on phones) and highlighted in the system blue. This list is exactly as wide as the field, opens
+   right under it, scrolls inside a capped height, wraps long names, and uses the site's lilac/plum colours. */
+function ReasonSelect({ value, onChange, options }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[] }) {
+  const [open, setOpen] = useState(false)
+  const [hi, setHi] = useState(0)
+  const wrap = useRef<HTMLDivElement>(null)
+  const list = useRef<HTMLUListElement>(null)
+  const current = options.find((o) => o.value === value) ?? options[0]
+
+  useEffect(() => {
+    if (!open) return
+    setHi(Math.max(0, options.findIndex((o) => o.value === value)))
+    const away = (e: PointerEvent) => { if (!wrap.current?.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('pointerdown', away)
+    return () => document.removeEventListener('pointerdown', away)
+  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // keep the highlighted option in view while using the keyboard
+  useEffect(() => { if (open) list.current?.children[hi]?.scrollIntoView({ block: 'nearest' }) }, [hi, open])
+
+  const pick = (i: number) => { onChange(options[i].value); setOpen(false) }
+  const onKey = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      if (!open) { setOpen(true); return }
+      setHi((h) => Math.min(options.length - 1, Math.max(0, h + (e.key === 'ArrowDown' ? 1 : -1))))
+    } else if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault()
+      if (open) pick(hi); else setOpen(true)
+    } else if (e.key === 'Escape') { setOpen(false) }
+    else if (e.key === 'Tab') { setOpen(false) }
+  }
+
+  return (
+    <div ref={wrap} className="relative">
+      <button id="reason" type="button" role="combobox" aria-haspopup="listbox" aria-expanded={open} aria-controls="reason-list"
+        aria-activedescendant={open ? `reason-opt-${hi}` : undefined}
+        onClick={() => setOpen((o) => !o)} onKeyDown={onKey}
+        className={`field flex items-center justify-between gap-3 text-left ${open ? 'border-plum ring-2 ring-plum/20' : ''}`}>
+        <span className="min-w-0 truncate">{current.label}</span>
+        <ChevronDown className={`h-4 w-4 shrink-0 text-muted transition-transform duration-200 ${open ? 'rotate-180 text-plum' : ''}`} />
+      </button>
+      {open && (
+        <ul ref={list} id="reason-list" role="listbox" aria-labelledby="reason" data-lenis-prevent
+          className="absolute inset-x-0 top-full z-30 mt-1.5 max-h-64 overflow-y-auto overscroll-contain rounded-[10px] border border-line bg-white p-1.5 shadow-[0_18px_40px_-18px_rgba(46,13,54,.35)]">
+          {options.map((o, i) => {
+            const sel = o.value === value
+            return (
+              <li key={o.value || 'general'} id={`reason-opt-${i}`} role="option" aria-selected={sel}
+                onPointerEnter={() => setHi(i)} onClick={() => pick(i)}
+                className={`flex cursor-pointer items-start gap-2 rounded-lg px-3 py-2.5 text-[0.9375rem] leading-snug transition-colors ${sel ? 'font-semibold text-plum' : 'text-ink'} ${i === hi ? 'bg-lilac' : ''}`}>
+                <span className="min-w-0 flex-1">{o.label}</span>
+                {sel && <Check className="mt-0.5 h-4 w-4 shrink-0 text-plum" strokeWidth={2.5} />}
+              </li>
+            )
+          })}
+        </ul>
+      )}
+    </div>
   )
 }
 

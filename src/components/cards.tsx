@@ -72,14 +72,16 @@ export function FeatureTreatment({ t, big = false }: { t: Treatment; big?: boole
   )
 }
 
-export function TestimonialCard({ t }: { t: { quote: string; name: string; city: string; date: string } }) {
+/* compact: on phones (< 640px) tighter padding and smaller type, so two cards fit side by side; 640px+ unchanged */
+export function TestimonialCard({ t, compact = false }: { t: { quote: string; name: string; city: string; date: string }; compact?: boolean }) {
+  const c = (small: string, normal: string) => (compact ? small : normal)
   return (
-    <figure className="card flex h-full flex-col p-7 md:p-8">
-      <Quote className="h-7 w-7 text-lavender" aria-hidden />
-      <blockquote className="mt-5 flex-1 font-display text-[1.3rem] leading-snug text-ink">“{t.quote}”</blockquote>
-      <figcaption className="mt-6 flex items-center gap-3 border-t border-line pt-5">
-        <span className="grid h-10 w-10 place-items-center rounded-full bg-lilac font-semibold text-plum">{t.name[0]}</span>
-        <span><span className="block font-semibold">{t.name}</span><span className="text-sm text-muted">{t.city} · {t.date}</span></span>
+    <figure className={`card flex h-full flex-col ${c('p-4 sm:p-7 md:p-8', 'p-7 md:p-8')}`}>
+      <Quote className={`text-lavender ${c('h-5 w-5 sm:h-7 sm:w-7', 'h-7 w-7')}`} aria-hidden />
+      <blockquote className={`flex-1 font-display leading-snug text-ink ${c('mt-3 text-[0.9375rem] sm:mt-5 sm:text-[1.3rem]', 'mt-5 text-[1.3rem]')}`}>“{t.quote}”</blockquote>
+      <figcaption className={`flex items-center border-t border-line ${c('mt-4 gap-2 pt-3 sm:mt-6 sm:gap-3 sm:pt-5', 'mt-6 gap-3 pt-5')}`}>
+        <span className={`grid shrink-0 place-items-center rounded-full bg-lilac font-semibold text-plum ${c('h-8 w-8 text-sm sm:h-10 sm:w-10 sm:text-base', 'h-10 w-10')}`}>{t.name[0]}</span>
+        <span className="min-w-0"><span className={`block font-semibold ${c('text-sm sm:text-base', '')}`}>{t.name}</span><span className={`text-muted ${c('text-xs sm:text-sm', 'text-sm')}`}>{t.city} · {t.date}</span></span>
       </figcaption>
     </figure>
   )
